@@ -1,19 +1,20 @@
+import { Inter } from 'next/font/google'
 import './global.css'
 import Header from '@/components/Header'
 
+const inter = Inter({ subsets: ['latin'] })
+
 export const metadata = {
-  title: 'QuickRent - Rent Anything',
-  description: 'Peer-to-peer rental platform',
+  title: 'QuickRent - Rent Anything, Anytime',
+  description: 'The easiest way to rent anything you need. From cameras to power tools, find everything without the commitment of buying.',
 }
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body>
+      <body className={inter.className}>
         <Header />
-        <main className="min-h-screen">
-          {children}
-        </main>
+        <main>{children}</main>
       </body>
     </html>
   )
