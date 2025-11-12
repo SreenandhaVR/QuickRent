@@ -1,87 +1,86 @@
 'use client';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
-import { useState } from 'react';
+import { motion, useScroll, useTransform } from 'framer-motion';
+import { usePathname } from 'next/navigation';
 
 export default function Header() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { scrollY } = useScroll();
+  const logoOpacity = useTransform(scrollY, [0, 200], [1, 0]);
+  const navbarOpacity = useTransform(scrollY, [100, 300], [1, 0]);
+  const pathname = usePathname();
+
+  if (pathname !== '/') {
+    return null;
+  }
 
   return (
-    <motion.header 
-      initial={{ y: -100 }}
-      animate={{ y: 0 }}
-      transition={{ duration: 0.6 }}
-      className="absolute top-0 w-full z-50 bg-transparent"
-    >
-      <nav className="max-w-7xl mx-auto px-6 py-4">
-        <div className="flex items-center justify-between">
-          {/* Logo */}
-          <motion.div whileHover={{ scale: 1.05 }}>
-            <Link href="/" className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-r from-cyan-400 to-emerald-400 rounded-lg flex items-center justify-center">
-                <span className="text-black font-bold text-xl">Q</span>
-              </div>
-              <span className="text-2xl font-bold">QuickRent</span>
+    <div className="fixed top-8 left-1/2 transform -translate-x-1/2 z-50 w-screen max-w-7xl">
+      <div className="flex items-center justify-between px-8">
+        {/* Logo */}
+        <motion.div 
+          style={{ opacity: logoOpacity }}
+          className="flex-shrink-0"
+        >
+          <motion.div
+            whileHover={{ scale: 1.1 }}
+            transition={{ duration: 0.3 }}
+          >
+            <Link href="/" className="text-2xl font-bold text-white">
+              <span className="text-cyan-400 drop-shadow-[0_0_8px_rgba(6,182,212,0.8)]">Q</span>uickRent
             </Link>
           </motion.div>
-
-          {/* Navigation */}
-          <div className="hidden lg:flex items-center space-x-8">
+        </motion.div>
+        
+        {/* Navbar */}
+        <motion.nav 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          style={{ opacity: navbarOpacity }}
+          transition={{ duration: 0.6 }}
+          className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl px-8 py-4 shadow-lg shadow-black/10"
+        >
+          <div className="flex items-center gap-8">
             {[
-              { name: 'Solutions', href: '/solutions' },
-              { name: 'Pricing', href: '/pricing' },
-              { name: 'About', href: '/about' },
-              { name: 'Contact', href: '/contact' }
-            ].map((item, index) => (
-              <motion.div
+              { name: 'Home', href: '/' },
+              { name: 'Browse Items', href: '/browse' },
+              { name: 'Rent Out', href: '/rent-out' },
+              { name: 'Near Me', href: '/near-me' }
+            ].map((item) => (
+              <Link
                 key={item.name}
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 + 0.3 }}
+                href={item.href}
+                className="text-white font-semibold hover:bg-gradient-to-r hover:from-cyan-400 hover:to-green-400 hover:bg-clip-text hover:text-transparent transition-all duration-300 relative group"
               >
-                <Link 
-                  href={item.href}
-                  className="text-gray-300 hover:text-cyan-400 font-medium transition-colors duration-300 relative group"
-                >
-                  {item.name}
-                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-cyan-400 group-hover:w-full transition-all duration-300"></span>
-                </Link>
-              </motion.div>
+                {item.name}
+                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-cyan-400 to-green-400 group-hover:w-full transition-all duration-300"></span>
+              </Link>
             ))}
           </div>
-
-          {/* Action Buttons */}
-          <div className="hidden lg:flex items-center space-x-4">
-            <motion.div whileHover={{ scale: 1.05 }}>
-              <Link 
-                href="/login" 
-                className="px-6 py-2.5 text-gray-300 hover:text-white font-medium transition-colors"
-              >
-                Sign In
-              </Link>
-            </motion.div>
-            <motion.div whileHover={{ scale: 1.05, boxShadow: "0 0 20px rgba(6,182,212,0.3)" }}>
-              <Link 
-                href="/get-started" 
-                className="px-6 py-2.5 bg-gradient-to-r from-cyan-500 to-emerald-500 text-white font-semibold rounded-lg"
-              >
-                Get Started
-              </Link>
-            </motion.div>
-          </div>
-
-          {/* Mobile Menu Button */}
-          <motion.button 
-            className="lg:hidden p-2"
-            whileTap={{ scale: 0.9 }}
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-          >
-            <svg className="w-6 h-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </motion.button>
-        </div>
-      </nav>
-    </motion.header>
+        </motion.nav>
+        
+        {/* CTA Buttons */}
+        <motion.div 
+          style={{ opacity: logoOpacity }}
+          className="flex items-center gap-4 flex-shrink-0"
+        >
+          <motion.div whileHover={{ boxShadow: "0 0 20px rgba(6,182,212,0.5)" }}>
+            <Link
+              href="/post-rental"
+              className="px-8 py-2 bg-gradient-to-r from-cyan-400 to-green-400 text-white font-semibold rounded-lg hover:from-cyan-500 hover:to-green-500 transition-all duration-300"
+            >
+              Post a Rental
+            </Link>
+          </motion.div>
+          <motion.div whileHover={{ boxShadow: "0 0 20px rgba(6,182,212,0.5)" }}>
+            <Link
+              href="/login"
+              className="px-8 py-2 border border-cyan-400 text-white font-semibold rounded-lg hover:bg-cyan-400/10 transition-all duration-300"
+            >
+              Login / Register
+            </Link>
+          </motion.div>
+        </motion.div>
+      </div>
+    </div>
   );
 }
