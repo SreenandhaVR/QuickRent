@@ -60,7 +60,7 @@ export default function Hero() {
             Browse Rentals
           </Link>
           <Link
-            href="/list-item"
+            href="/post-rental"
             className="px-8 py-4 border-2 border-cyan-400 text-white font-semibold rounded-lg hover:bg-cyan-400/10 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-2 focus:ring-offset-black"
             aria-label="List your item for rental"
           >
