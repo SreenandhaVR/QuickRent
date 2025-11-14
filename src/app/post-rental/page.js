@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { Smartphone, Palette, Settings, Upload, Edit3, Crop, RotateCw, ZoomIn, ZoomOut } from 'lucide-react';
 
 export default function PostRental() {
   const [images, setImages] = useState([]);
@@ -16,17 +17,19 @@ export default function PostRental() {
   const [phone, setPhone] = useState('');
   const [whatsapp, setWhatsapp] = useState(false);
   const [inAppChat, setInAppChat] = useState(true);
-  const [showPreview, setShowPreview] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState('');
-  const [postTheme, setPostTheme] = useState('minimal');
   const [editingImage, setEditingImage] = useState(null);
   const [brightness, setBrightness] = useState(100);
   const [contrast, setContrast] = useState(100);
   const [condition, setCondition] = useState('');
   const [customCondition, setCustomCondition] = useState('');
   const [cropMode, setCropMode] = useState(false);
-  const [cropPosition, setCropPosition] = useState({ x: 16, y: 16, width: 200, height: 200 });
+  const [cropPosition, setCropPosition] = useState({ x: 50, y: 50, width: 200, height: 200 });
   const [isDragging, setIsDragging] = useState(false);
+  const [zoom, setZoom] = useState(100);
+  const [rotation, setRotation] = useState(0);
+  const [aspectRatio, setAspectRatio] = useState('free');
+  const [activeSection, setActiveSection] = useState('media');
 
   const categories = ['Clothes', 'Electronics', 'Tools', 'Vehicles', 'Furniture', 'Party Props'];
   const availabilityOptions = ['Available Now', 'Booked till Thursday', 'Only weekends'];
@@ -74,574 +77,566 @@ export default function PostRental() {
     const img = new window.Image();
     
     img.onload = () => {
-      const scaleX = img.width / 256; // Assuming preview is 256px
-      const scaleY = img.height / 256;
+      const scaleX = img.width / 400;
+      const scaleY = img.height / 400;
       
       canvas.width = cropPosition.width * scaleX;
       canvas.height = cropPosition.height * scaleY;
       
+      ctx.save();
+      ctx.translate(canvas.width / 2, canvas.height / 2);
+      ctx.rotate((rotation * Math.PI) / 180);
+      ctx.scale(zoom / 100, zoom / 100);
+      
       ctx.drawImage(
         img,
-        cropPosition.x * scaleX,
-        cropPosition.y * scaleY,
+        cropPosition.x * scaleX - canvas.width / 2,
+        cropPosition.y * scaleY - canvas.height / 2,
         cropPosition.width * scaleX,
         cropPosition.height * scaleY,
-        0,
-        0,
+        -canvas.width / 2,
+        -canvas.height / 2,
         canvas.width,
         canvas.height
       );
+      
+      ctx.restore();
       
       const croppedImageUrl = canvas.toDataURL();
       setImages(prev => prev.map((image, index) => 
         index === editingImage ? croppedImageUrl : image
       ));
-      setCropMode(false);
+      setEditingImage(null);
     };
     
     img.src = images[editingImage];
   };
 
+  const setAspectRatioConstraint = (ratio) => {
+    setAspectRatio(ratio);
+    if (ratio !== 'free') {
+      const ratios = { '1:1': 1, '4:5': 0.8, '16:9': 1.78 };
+      const targetRatio = ratios[ratio];
+      const currentWidth = cropPosition.width;
+      const newHeight = currentWidth / targetRatio;
+      setCropPosition(prev => ({ ...prev, height: newHeight }));
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-gray-900 rounded-2xl border border-gray-700 w-full max-w-lg max-h-[95vh] overflow-y-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-700 sticky top-0 bg-gray-900 z-10">
-          <h1 className="text-lg font-semibold text-white">New Rental Post</h1>
-          <Link href="/" className="text-gray-400 hover:text-white text-xl">✕</Link>
-        </div>
-
-        <div className="p-4 space-y-6">
-          {/* Photo Upload - IG Style */}
-          <div className="grid grid-cols-5 gap-2">
-            {images.map((img, index) => (
-              <div key={index} className="aspect-square relative group">
-                <Image 
-                  src={img} 
-                  alt={`Photo ${index + 1}`} 
-                  fill 
-                  className="object-cover rounded-lg"
-                  style={{
-                    filter: `brightness(${brightness}%) contrast(${contrast}%)`
-                  }}
-                />
-                <button
-                  onClick={() => setEditingImage(index)}
-                  className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-lg"
-                >
-                  <span className="text-white text-lg">✏️</span>
-                </button>
-                <button
-                  onClick={() => setImages(prev => prev.filter((_, i) => i !== index))}
-                  className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  <span className="text-white text-xs">✕</span>
-                </button>
-              </div>
-            ))}
-            {images.length < 10 && (
-              <label className="aspect-square bg-gray-800 border-2 border-dashed border-gray-600 rounded-lg flex items-center justify-center cursor-pointer hover:border-cyan-400 transition-colors">
-                <span className="text-gray-400 text-xl">+</span>
-                <input type="file" multiple accept="image/*" onChange={handleImageUpload} className="hidden" />
-              </label>
-            )}
-          </div>
-
-          {/* Quick Templates */}
-          <div>
-            <p className="text-white text-sm font-medium mb-2">Quick Templates</p>
-            <div className="grid grid-cols-2 gap-2">
-              {Object.entries(templates).map(([key, template]) => (
-                <button
-                  key={key}
-                  onClick={() => applyTemplate(key)}
-                  className={`p-3 rounded-lg border text-left transition-colors ${
-                    selectedTemplate === key 
-                      ? 'border-cyan-400 bg-cyan-400/10' 
-                      : 'border-gray-600 hover:border-gray-500'
-                  }`}
-                >
-                  <p className="text-white text-sm font-medium capitalize">{key} Rental</p>
-                  <p className="text-gray-400 text-xs">{template.category}</p>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Caption Area - IG Style */}
-          <div>
-            <textarea
-              value={caption}
-              onChange={(e) => setCaption(e.target.value)}
-              placeholder="Describe your item 🔥 Condition, brand, why someone should rent it…"
-              rows="4"
-              className="w-full px-3 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400 resize-none"
-            />
-            
-            {/* Auto-Suggestions */}
-            <div className="flex flex-wrap gap-2 mt-2">
-              <button onClick={() => addSuggestion('condition')} className="px-3 py-1 bg-gray-700 text-cyan-400 rounded-full text-xs hover:bg-gray-600 transition-colors">
-                Add Condition
-              </button>
-              <button onClick={() => addSuggestion('price')} className="px-3 py-1 bg-gray-700 text-cyan-400 rounded-full text-xs hover:bg-gray-600 transition-colors">
-                Add Price
-              </button>
-              <button onClick={() => addSuggestion('location')} className="px-3 py-1 bg-gray-700 text-cyan-400 rounded-full text-xs hover:bg-gray-600 transition-colors">
-                Add Location
-              </button>
-            </div>
-          </div>
-
-          {/* Tag Categories */}
-          <div>
-            <p className="text-white text-sm font-medium mb-2">Tag Category</p>
-            <div className="flex flex-wrap gap-2">
-              {categories.map((cat) => (
-                <button
-                  key={cat}
-                  onClick={() => setSelectedCategory(cat)}
-                  className={`px-3 py-1 rounded-full text-xs transition-colors ${
-                    selectedCategory === cat
-                      ? 'bg-cyan-400 text-black'
-                      : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                  }`}
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Tag Availability */}
-          <div>
-            <p className="text-white text-sm font-medium mb-2">Tag Availability</p>
-            <div className="flex flex-wrap gap-2">
-              {availabilityOptions.map((option) => (
-                <button
-                  key={option}
-                  onClick={() => setSelectedAvailability(option)}
-                  className={`px-3 py-1 rounded-full text-xs transition-colors ${
-                    selectedAvailability === option
-                      ? 'bg-green-400 text-black'
-                      : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                  }`}
-                >
-                  {option}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Location Picker */}
-          <div>
-            <p className="text-white text-sm font-medium mb-2">📍 Add Location</p>
-            <div className="space-y-2">
-              <input
-                type="text"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                placeholder="Search location..."
-                className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400"
-              />
-              <div className="flex flex-wrap gap-2">
-                {savedLocations.map((loc) => (
-                  <button
-                    key={loc}
-                    onClick={() => setLocation(loc)}
-                    className="px-3 py-1 bg-gray-700 text-gray-300 rounded-full text-xs hover:bg-gray-600 transition-colors"
-                  >
-                    {loc}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Price Panel */}
-          <div className="bg-gray-800/50 rounded-xl p-4 space-y-4">
-            <p className="text-white text-sm font-medium">💰 Pricing</p>
-            <div className="grid grid-cols-3 gap-3">
-              <div>
-                <label className="block text-gray-400 text-xs mb-1">Per Day</label>
-                <input
-                  type="number"
-                  value={pricePerDay}
-                  onChange={(e) => setPricePerDay(e.target.value)}
-                  placeholder="₹500"
-                  className="w-full px-2 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-1 focus:ring-pink-400"
-                />
-              </div>
-              <div>
-                <label className="block text-gray-400 text-xs mb-1">Per Week</label>
-                <input
-                  type="number"
-                  value={pricePerWeek}
-                  onChange={(e) => setPricePerWeek(e.target.value)}
-                  placeholder="₹3000"
-                  className="w-full px-2 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-1 focus:ring-pink-400"
-                />
-              </div>
-              <div>
-                <label className="block text-gray-400 text-xs mb-1">Per Month</label>
-                <input
-                  type="number"
-                  value={pricePerMonth}
-                  onChange={(e) => setPricePerMonth(e.target.value)}
-                  placeholder="₹10000"
-                  className="w-full px-2 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-1 focus:ring-pink-400"
-                />
-              </div>
-            </div>
-            <div>
-              <label className="block text-gray-400 text-xs mb-1">Deposit (Optional)</label>
-              <input
-                type="number"
-                value={deposit}
-                onChange={(e) => setDeposit(e.target.value)}
-                placeholder="₹1000"
-                className="w-full px-2 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-1 focus:ring-pink-400"
-              />
-            </div>
-          </div>
-
-          {/* Contact Info */}
-          <div className="bg-gray-800/50 rounded-xl p-4 space-y-3">
-            <p className="text-white text-sm font-medium">☎️ Contact Info</p>
-            <input
-              type="tel"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="Phone number"
-              className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400"
-            />
-            <div className="flex items-center justify-between">
-              <label className="flex items-center space-x-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={whatsapp}
-                  onChange={(e) => setWhatsapp(e.target.checked)}
-                  className="w-4 h-4 text-green-400 bg-gray-700 border-gray-600 rounded focus:ring-green-400"
-                />
-                <span className="text-gray-300 text-sm">WhatsApp</span>
-              </label>
-              <label className="flex items-center space-x-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={inAppChat}
-                  onChange={(e) => setInAppChat(e.target.checked)}
-                  className="w-4 h-4 text-cyan-400 bg-gray-700 border-gray-600 rounded focus:ring-cyan-400"
-                />
-                <span className="text-gray-300 text-sm">In-app chat</span>
-              </label>
-            </div>
-          </div>
-
-          {/* Post Style Themes */}
-          <div>
-            <p className="text-white text-sm font-medium mb-2">✨ Post Style</p>
-            <div className="grid grid-cols-4 gap-2">
-              {[
-                { key: 'minimal', name: 'Minimal', bg: 'bg-white/10' },
-                { key: 'retro', name: 'Retro', bg: 'bg-orange-400/20' },
-                { key: 'neon', name: 'Neon', bg: 'bg-pink-400/20' },
-                { key: 'pro', name: 'Pro', bg: 'bg-blue-400/20' }
-              ].map((theme) => (
-                <button
-                  key={theme.key}
-                  onClick={() => setPostTheme(theme.key)}
-                  className={`p-2 rounded-lg text-xs transition-colors ${
-                    postTheme === theme.key
-                      ? 'border-2 border-cyan-400 ' + theme.bg
-                      : 'border border-gray-600 hover:border-gray-500 ' + theme.bg
-                  }`}
-                >
-                  <span className="text-white">{theme.name}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Bottom Actions */}
-        <div className="sticky bottom-0 bg-gray-900 border-t border-gray-700 p-4 space-y-3">
-          <button
-            onClick={() => setShowPreview(!showPreview)}
-            className="w-full py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors"
-          >
-            {showPreview ? 'Hide Preview' : 'Preview Post'}
-          </button>
-          <button className="w-full py-3 bg-gradient-to-r from-cyan-400 to-green-400 text-white font-semibold rounded-xl hover:from-cyan-500 hover:to-green-500 transition-colors">
-            Share to Marketplace 🚀
-          </button>
-        </div>
+    <div className="min-h-screen bg-gray-900 flex">
+      {/* Left Sidebar */}
+      <div className="w-16 bg-gray-800 border-r border-gray-700 flex flex-col items-center py-4 space-y-4">
+        <Link href="/" className="w-10 h-10 bg-cyan-400 rounded-lg flex items-center justify-center text-black font-bold">
+          Q
+        </Link>
+        <button
+          onClick={() => setActiveSection('media')}
+          className={`w-10 h-10 rounded-lg flex items-center justify-center cursor-pointer transition-colors ${
+            activeSection === 'media' ? 'bg-cyan-400 text-black' : 'bg-gray-700 text-white hover:bg-gray-600'
+          }`}
+        >
+          <Smartphone size={20} />
+        </button>
+        <button
+          onClick={() => setActiveSection('design')}
+          className={`w-10 h-10 rounded-lg flex items-center justify-center cursor-pointer transition-colors ${
+            activeSection === 'design' ? 'bg-cyan-400 text-black' : 'bg-gray-700 text-white hover:bg-gray-600'
+          }`}
+        >
+          <Palette size={20} />
+        </button>
+        <button
+          onClick={() => setActiveSection('settings')}
+          className={`w-10 h-10 rounded-lg flex items-center justify-center cursor-pointer transition-colors ${
+            activeSection === 'settings' ? 'bg-cyan-400 text-black' : 'bg-gray-700 text-white hover:bg-gray-600'
+          }`}
+        >
+          <Settings size={20} />
+        </button>
       </div>
 
-      {/* Preview Modal */}
-      {showPreview && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-          <div className="bg-gray-900 rounded-2xl border border-gray-700 w-full max-w-sm max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-4 border-b border-gray-700">
-              <h2 className="text-lg font-semibold text-white">Post Preview</h2>
-              <button onClick={() => setShowPreview(false)} className="text-gray-400 hover:text-white text-xl">✕</button>
-            </div>
-            
-            <div className="p-4">
-              {/* Preview Content */}
-              <div className={`rounded-xl overflow-hidden ${
-                postTheme === 'minimal' ? 'bg-white/5' :
-                postTheme === 'retro' ? 'bg-orange-400/10' :
-                postTheme === 'neon' ? 'bg-gradient-to-br from-pink-400/20 to-purple-400/20' :
-                'bg-blue-400/10'
-              }`}>
-                {/* User Info */}
-                <div className="flex items-center p-3 border-b border-gray-700/50">
-                  <div className="w-8 h-8 bg-cyan-400 rounded-full flex items-center justify-center">
-                    <span className="text-black text-sm font-bold">U</span>
-                  </div>
-                  <div className="ml-3">
-                    <p className="text-white text-sm font-medium">username</p>
-                    <p className="text-gray-400 text-xs">{location || 'Location'}</p>
+      {/* Main Content */}
+      <div className="flex-1 flex">
+        {/* Left Panel - Form */}
+        <div className="w-80 bg-gray-900 border-r border-gray-700 overflow-y-auto">
+          <div className="p-4 border-b border-gray-700">
+            <h1 className="text-lg font-semibold text-white">NEW RENTAL POST</h1>
+          </div>
+
+          <div className="p-4 space-y-6">
+            {/* MEDIA SECTION */}
+            {activeSection === 'media' && (
+              <>
+                {/* QUICK START */}
+                <div>
+                  <h3 className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">QUICK START</h3>
+                  <div className="grid grid-cols-2 gap-2">
+                    {Object.entries(templates).map(([key, template]) => (
+                      <button
+                        key={key}
+                        onClick={() => applyTemplate(key)}
+                        className={`p-3 rounded-lg border text-left transition-colors ${
+                          selectedTemplate === key 
+                            ? 'border-cyan-400 bg-cyan-400/10' 
+                            : 'border-gray-600 hover:border-gray-500'
+                        }`}
+                      >
+                        <p className="text-white text-sm font-medium capitalize">{key}</p>
+                        <p className="text-gray-400 text-xs">{template.category}</p>
+                      </button>
+                    ))}
                   </div>
                 </div>
-                
-                {/* Images */}
-                {images.length > 0 && (
-                  <div className="aspect-square relative bg-gray-800">
-                    <Image src={images[0]} alt="Preview" fill className="object-cover" />
-                    {selectedCategory && (
-                      <div className="absolute top-2 left-2 bg-cyan-400 text-black px-2 py-1 rounded text-xs font-semibold">
-                        {selectedCategory}
-                      </div>
-                    )}
-                    {selectedAvailability && (
-                      <div className="absolute top-2 right-2 bg-green-400 text-black px-2 py-1 rounded text-xs font-semibold">
-                        {selectedAvailability}
-                      </div>
-                    )}
+
+                {/* MEDIA UPLOAD */}
+                <div>
+                  <h3 className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">MEDIA</h3>
+                  <div className="bg-gray-800 border-2 border-dashed border-gray-600 rounded-lg p-8 text-center hover:border-cyan-400 transition-colors">
+                    <Upload className="mx-auto mb-2 text-gray-400" size={32} />
+                    <p className="text-white font-medium mb-1">Upload Images</p>
+                    <p className="text-gray-400 text-sm mb-4">Drag & drop or click to browse</p>
+                    <label className="inline-block px-4 py-2 bg-cyan-400 text-black rounded-lg cursor-pointer hover:bg-cyan-500 transition-colors">
+                      Choose Files
+                      <input type="file" multiple accept="image/*" onChange={handleImageUpload} className="hidden" />
+                    </label>
                   </div>
-                )}
-                
-                {/* Actions */}
-                <div className="flex items-center justify-between p-3">
-                  <div className="flex space-x-4">
-                    <span className="text-xl">❤️</span>
-                    <span className="text-xl">💬</span>
-                    <span className="text-xl">📤</span>
-                  </div>
-                  <span className="text-xl">🔖</span>
-                </div>
-                
-                {/* Caption */}
-                <div className="px-3 pb-3">
-                  <p className="text-white text-sm">
-                    <span className="font-semibold">username</span> {caption}
-                  </p>
-                  {pricePerDay && (
-                    <div className="mt-2 flex space-x-2">
-                      <span className="bg-pink-400 text-black px-2 py-1 rounded text-xs font-semibold">
-                        ₹{pricePerDay}/day
-                      </span>
-                      {pricePerWeek && (
-                        <span className="bg-pink-400 text-black px-2 py-1 rounded text-xs font-semibold">
-                          ₹{pricePerWeek}/week
-                        </span>
-                      )}
+                  {images.length > 0 && (
+                    <div className="grid grid-cols-4 gap-2 mt-3">
+                      {images.map((img, index) => (
+                        <div key={index} className="aspect-square relative group">
+                          <Image src={img} alt={`Photo ${index + 1}`} fill className="object-cover rounded-lg" />
+                          <button
+                            onClick={() => setEditingImage(index)}
+                            className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-lg"
+                          >
+                            <Edit3 className="text-white" size={20} />
+                          </button>
+                        </div>
+                      ))}
                     </div>
                   )}
                 </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
-      {/* Image Editor Modal */}
-      {editingImage !== null && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-          <div className="bg-gray-900 rounded-2xl border border-gray-700 w-full max-w-sm">
-            <div className="flex items-center justify-between p-4 border-b border-gray-700">
-              <h2 className="text-lg font-semibold text-white">Edit Photo</h2>
-              <button
-                onClick={() => setEditingImage(null)}
-                className="text-gray-400 hover:text-white text-xl"
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className="p-4 space-y-4">
-              {/* Preview */}
-              <div className="aspect-square relative bg-gray-800 rounded-lg overflow-hidden">
-                <Image
-                  src={images[editingImage]}
-                  alt="Editing"
-                  fill
-                  className="object-cover"
-                  style={{
-                    filter: `brightness(${brightness}%) contrast(${contrast}%)`
-                  }}
-                />
-                <button
-                  onClick={() => setCropMode(!cropMode)}
-                  className={`absolute bottom-2 right-2 w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
-                    cropMode
-                      ? 'bg-cyan-400 text-black'
-                      : 'bg-black/50 text-white hover:bg-black/70'
-                  }`}
-                >
-                  <span className="text-sm">✂️</span>
-                </button>
-                {cropMode && (
-                  <div 
-                    className="absolute border-2 border-dashed border-cyan-400 bg-black/20 cursor-move"
-                    style={{
-                      left: `${cropPosition.x}px`,
-                      top: `${cropPosition.y}px`,
-                      width: `${cropPosition.width}px`,
-                      height: `${cropPosition.height}px`
-                    }}
-                    onMouseDown={(e) => {
-                      setIsDragging(true);
-                      const rect = e.currentTarget.parentElement.getBoundingClientRect();
-                      const offsetX = e.clientX - rect.left - cropPosition.x;
-                      const offsetY = e.clientY - rect.top - cropPosition.y;
-                      
-                      const handleMouseMove = (e) => {
-                        const newX = e.clientX - rect.left - offsetX;
-                        const newY = e.clientY - rect.top - offsetY;
-                        setCropPosition(prev => ({
-                          ...prev,
-                          x: Math.max(0, Math.min(newX, rect.width - prev.width)),
-                          y: Math.max(0, Math.min(newY, rect.height - prev.height))
-                        }));
-                      };
-                      
-                      const handleMouseUp = () => {
-                        setIsDragging(false);
-                        document.removeEventListener('mousemove', handleMouseMove);
-                        document.removeEventListener('mouseup', handleMouseUp);
-                      };
-                      
-                      document.addEventListener('mousemove', handleMouseMove);
-                      document.addEventListener('mouseup', handleMouseUp);
-                    }}
-                  >
-                    <div className="absolute -top-1 -left-1 w-3 h-3 bg-cyan-400 rounded-full cursor-nw-resize"></div>
-                    <div className="absolute -top-1 -right-1 w-3 h-3 bg-cyan-400 rounded-full cursor-ne-resize"></div>
-                    <div className="absolute -bottom-1 -left-1 w-3 h-3 bg-cyan-400 rounded-full cursor-sw-resize"></div>
-                    <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-cyan-400 rounded-full cursor-se-resize"></div>
-                    <div className="absolute top-1/2 -translate-y-1/2 -left-1 w-3 h-3 bg-cyan-400 rounded-full cursor-w-resize"></div>
-                    <div className="absolute top-1/2 -translate-y-1/2 -right-1 w-3 h-3 bg-cyan-400 rounded-full cursor-e-resize"></div>
-                    <div className="absolute left-1/2 -translate-x-1/2 -top-1 w-3 h-3 bg-cyan-400 rounded-full cursor-n-resize"></div>
-                    <div className="absolute left-1/2 -translate-x-1/2 -bottom-1 w-3 h-3 bg-cyan-400 rounded-full cursor-s-resize"></div>
-                  </div>
-                )}
-                {condition && (
-                  <div className="absolute top-2 right-2 bg-cyan-400 text-black px-2 py-1 rounded text-xs font-semibold">
-                    {condition}
-                  </div>
-                )}
-              </div>
-
-              {/* Brightness */}
-              <div>
-                <label className="block text-white text-sm mb-2">Brightness</label>
-                <input
-                  type="range"
-                  min="50"
-                  max="150"
-                  value={brightness}
-                  onChange={(e) => setBrightness(e.target.value)}
-                  className="w-full"
-                />
-              </div>
-
-              {/* Contrast */}
-              <div>
-                <label className="block text-white text-sm mb-2">Contrast</label>
-                <input
-                  type="range"
-                  min="50"
-                  max="150"
-                  value={contrast}
-                  onChange={(e) => setContrast(e.target.value)}
-                  className="w-full"
-                />
-              </div>
-
-              {/* Condition Stickers */}
-              <div>
-                <label className="block text-white text-sm mb-2">Condition</label>
-                <div className="flex flex-wrap gap-2 mb-2">
-                  {['New', 'Like New', 'Used'].map((cond) => (
-                    <button
-                      key={cond}
-                      onClick={() => setCondition(condition === cond ? '' : cond)}
-                      className={`px-3 py-1 rounded text-xs font-semibold transition-colors ${
-                        condition === cond
-                          ? 'bg-cyan-400 text-black'
-                          : 'bg-gray-700 text-white hover:bg-gray-600'
-                      }`}
-                    >
-                      {cond}
+                {/* DESCRIPTION */}
+                <div>
+                  <h3 className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">DESCRIPTION</h3>
+                  <textarea
+                    value={caption}
+                    onChange={(e) => setCaption(e.target.value)}
+                    placeholder="Describe your item, condition, and why someone should rent it..."
+                    rows="4"
+                    className="w-full bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-cyan-400"
+                  />
+                  <div className="flex gap-2 mt-2">
+                    <button onClick={() => addSuggestion('condition')} className="px-3 py-1 bg-gray-700 text-gray-300 rounded text-sm hover:bg-gray-600">
+                      + Condition
                     </button>
-                  ))}
+                    <button onClick={() => addSuggestion('price')} className="px-3 py-1 bg-gray-700 text-gray-300 rounded text-sm hover:bg-gray-600">
+                      + Price
+                    </button>
+                    <button onClick={() => addSuggestion('location')} className="px-3 py-1 bg-gray-700 text-gray-300 rounded text-sm hover:bg-gray-600">
+                      + Location
+                    </button>
+                  </div>
                 </div>
-                <div className="flex space-x-2">
+
+                {/* CATEGORY */}
+                <div>
+                  <h3 className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">CATEGORY</h3>
+                  <div className="grid grid-cols-2 gap-2">
+                    {categories.map((category) => (
+                      <button
+                        key={category}
+                        onClick={() => setSelectedCategory(category)}
+                        className={`p-3 rounded-lg border text-center transition-colors ${
+                          selectedCategory === category
+                            ? 'border-cyan-400 bg-cyan-400/10 text-cyan-400'
+                            : 'border-gray-600 text-gray-300 hover:border-gray-500'
+                        }`}
+                      >
+                        {category}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* DESIGN SECTION */}
+            {activeSection === 'design' && (
+              <>
+                {/* IMAGE EDITING */}
+                {editingImage !== null && (
+                  <div>
+                    <h3 className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">IMAGE EDITING</h3>
+                    <div className="bg-gray-800 rounded-lg p-4">
+                      <div className="relative w-full h-64 mb-4">
+                        <Image
+                          src={images[editingImage]}
+                          alt="Editing"
+                          fill
+                          className="object-contain rounded"
+                          style={{
+                            filter: `brightness(${brightness}%) contrast(${contrast}%)`,
+                            transform: `rotate(${rotation}deg) scale(${zoom / 100})`
+                          }}
+                        />
+                        {cropMode && (
+                          <div
+                            className="absolute border-2 border-cyan-400 bg-cyan-400/20"
+                            style={{
+                              left: `${cropPosition.x}px`,
+                              top: `${cropPosition.y}px`,
+                              width: `${cropPosition.width}px`,
+                              height: `${cropPosition.height}px`,
+                              cursor: isDragging ? 'grabbing' : 'grab'
+                            }}
+                          />
+                        )}
+                      </div>
+                      
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm text-gray-300 mb-2">Brightness: {brightness}%</label>
+                          <input
+                            type="range"
+                            min="50"
+                            max="150"
+                            value={brightness}
+                            onChange={(e) => setBrightness(e.target.value)}
+                            className="w-full"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm text-gray-300 mb-2">Contrast: {contrast}%</label>
+                          <input
+                            type="range"
+                            min="50"
+                            max="150"
+                            value={contrast}
+                            onChange={(e) => setContrast(e.target.value)}
+                            className="w-full"
+                          />
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => setCropMode(!cropMode)}
+                            className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+                              cropMode ? 'bg-cyan-400 text-black' : 'bg-gray-700 text-white hover:bg-gray-600'
+                            }`}
+                          >
+                            <Crop size={16} />
+                            Crop
+                          </button>
+                          <button
+                            onClick={() => setRotation(prev => prev + 90)}
+                            className="flex items-center gap-2 px-3 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600"
+                          >
+                            <RotateCw size={16} />
+                            Rotate
+                          </button>
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => setZoom(prev => Math.max(50, prev - 10))}
+                            className="flex items-center gap-2 px-3 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600"
+                          >
+                            <ZoomOut size={16} />
+                          </button>
+                          <span className="px-3 py-2 text-white">{zoom}%</span>
+                          <button
+                            onClick={() => setZoom(prev => Math.min(200, prev + 10))}
+                            className="flex items-center gap-2 px-3 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600"
+                          >
+                            <ZoomIn size={16} />
+                          </button>
+                        </div>
+                        {cropMode && (
+                          <div>
+                            <h4 className="text-sm text-gray-300 mb-2">Aspect Ratio</h4>
+                            <div className="flex gap-2">
+                              {['free', '1:1', '4:5', '16:9'].map((ratio) => (
+                                <button
+                                  key={ratio}
+                                  onClick={() => setAspectRatioConstraint(ratio)}
+                                  className={`px-3 py-1 rounded text-sm transition-colors ${
+                                    aspectRatio === ratio
+                                      ? 'bg-cyan-400 text-black'
+                                      : 'bg-gray-700 text-white hover:bg-gray-600'
+                                  }`}
+                                >
+                                  {ratio}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        <div className="flex gap-2">
+                          <button
+                            onClick={applyCrop}
+                            className="px-4 py-2 bg-cyan-400 text-black rounded-lg hover:bg-cyan-500"
+                          >
+                            Apply Changes
+                          </button>
+                          <button
+                            onClick={() => setEditingImage(null)}
+                            className="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* CONDITION STICKERS */}
+                <div>
+                  <h3 className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">CONDITION</h3>
+                  <div className="grid grid-cols-2 gap-2">
+                    {['New', 'Like New', 'Good', 'Fair'].map((cond) => (
+                      <button
+                        key={cond}
+                        onClick={() => setCondition(cond)}
+                        className={`p-3 rounded-lg border text-center transition-colors ${
+                          condition === cond
+                            ? 'border-cyan-400 bg-cyan-400/10 text-cyan-400'
+                            : 'border-gray-600 text-gray-300 hover:border-gray-500'
+                        }`}
+                      >
+                        {cond}
+                      </button>
+                    ))}
+                  </div>
                   <input
                     type="text"
+                    placeholder="Custom condition..."
                     value={customCondition}
                     onChange={(e) => setCustomCondition(e.target.value)}
-                    placeholder="Custom condition..."
-                    className="flex-1 px-2 py-1 bg-gray-700 border border-gray-600 rounded text-white placeholder-gray-400 text-xs focus:outline-none focus:ring-1 focus:ring-cyan-400"
+                    className="w-full mt-2 bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-cyan-400"
                   />
-                  <button
-                    onClick={() => {
-                      if (customCondition.trim()) {
-                        setCondition(customCondition.trim());
-                        setCustomCondition('');
-                      }
-                    }}
-                    className="px-3 py-1 bg-cyan-400 text-black rounded text-xs font-semibold hover:bg-cyan-500 transition-colors"
-                  >
-                    Add
+                </div>
+              </>
+            )}
+
+            {/* SETTINGS SECTION */}
+            {activeSection === 'settings' && (
+              <>
+                {/* AVAILABILITY */}
+                <div>
+                  <h3 className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">AVAILABILITY</h3>
+                  <div className="space-y-2">
+                    {availabilityOptions.map((option) => (
+                      <button
+                        key={option}
+                        onClick={() => setSelectedAvailability(option)}
+                        className={`w-full p-3 rounded-lg border text-left transition-colors ${
+                          selectedAvailability === option
+                            ? 'border-cyan-400 bg-cyan-400/10 text-cyan-400'
+                            : 'border-gray-600 text-gray-300 hover:border-gray-500'
+                        }`}
+                      >
+                        {option}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* LOCATION */}
+                <div>
+                  <h3 className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">LOCATION</h3>
+                  <input
+                    type="text"
+                    placeholder="Enter pickup location..."
+                    value={location}
+                    onChange={(e) => setLocation(e.target.value)}
+                    className="w-full bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-cyan-400 mb-2"
+                  />
+                  <div className="flex gap-2">
+                    {savedLocations.map((loc) => (
+                      <button
+                        key={loc}
+                        onClick={() => setLocation(loc)}
+                        className="px-3 py-1 bg-gray-700 text-gray-300 rounded text-sm hover:bg-gray-600"
+                      >
+                        {loc}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* PRICING */}
+                <div>
+                  <h3 className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">PRICING</h3>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-1">Per Day</label>
+                      <input
+                        type="number"
+                        placeholder="0"
+                        value={pricePerDay}
+                        onChange={(e) => setPricePerDay(e.target.value)}
+                        className="w-full bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-cyan-400"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-1">Per Week</label>
+                      <input
+                        type="number"
+                        placeholder="0"
+                        value={pricePerWeek}
+                        onChange={(e) => setPricePerWeek(e.target.value)}
+                        className="w-full bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-cyan-400"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-1">Per Month</label>
+                      <input
+                        type="number"
+                        placeholder="0"
+                        value={pricePerMonth}
+                        onChange={(e) => setPricePerMonth(e.target.value)}
+                        className="w-full bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-cyan-400"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-1">Deposit</label>
+                      <input
+                        type="number"
+                        placeholder="0"
+                        value={deposit}
+                        onChange={(e) => setDeposit(e.target.value)}
+                        className="w-full bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-cyan-400"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* CONTACT */}
+                <div>
+                  <h3 className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">CONTACT</h3>
+                  <input
+                    type="tel"
+                    placeholder="Phone number"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    className="w-full bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-cyan-400 mb-3"
+                  />
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-3">
+                      <input
+                        type="checkbox"
+                        checked={whatsapp}
+                        onChange={(e) => setWhatsapp(e.target.checked)}
+                        className="w-4 h-4 text-cyan-400 bg-gray-800 border-gray-600 rounded focus:ring-cyan-400"
+                      />
+                      <span className="text-gray-300">WhatsApp available</span>
+                    </label>
+                    <label className="flex items-center gap-3">
+                      <input
+                        type="checkbox"
+                        checked={inAppChat}
+                        onChange={(e) => setInAppChat(e.target.checked)}
+                        className="w-4 h-4 text-cyan-400 bg-gray-800 border-gray-600 rounded focus:ring-cyan-400"
+                      />
+                      <span className="text-gray-300">In-app chat</span>
+                    </label>
+                  </div>
+                </div>
+
+                {/* PUBLISH */}
+                <div className="pt-4 border-t border-gray-700">
+                  <button className="w-full py-3 bg-cyan-400 text-black font-medium rounded-lg hover:bg-cyan-500 transition-colors">
+                    Publish Rental Post
                   </button>
                 </div>
-              </div>
+              </>
+            )}
+          </div>
+        </div>
 
-              {/* Crop Button */}
-              {cropMode && (
-                <button
-                  onClick={applyCrop}
-                  className="w-full py-2 bg-green-500 text-white font-semibold rounded-lg hover:bg-green-600 transition-colors"
-                >
-                  Apply Crop
-                </button>
-              )}
+        {/* Right Panel - Preview */}
+        <div className="flex-1 bg-black flex items-center justify-center">
+          <div className="w-80 max-w-sm">
+            {/* Mobile Preview Frame */}
+            <div className="bg-gray-900 rounded-3xl p-2 shadow-2xl">
+              <div className="bg-black rounded-2xl overflow-hidden">
+                {/* Status Bar */}
+                <div className="bg-black px-4 py-2 flex justify-between items-center">
+                  <span className="text-white text-sm font-medium">9:41</span>
+                  <div className="flex space-x-1">
+                    <div className="w-4 h-2 bg-white rounded-sm"></div>
+                    <div className="w-6 h-2 bg-white rounded-sm"></div>
+                  </div>
+                </div>
 
-              {/* Action Buttons */}
-              <div className="flex space-x-3 pt-4">
-                <button
-                  onClick={() => {
-                    setBrightness(100);
-                    setContrast(100);
-                    setCondition('');
-                  }}
-                  className="flex-1 py-2 text-center text-gray-400 border border-gray-600 rounded-lg hover:bg-gray-800 transition-colors"
-                >
-                  Reset
-                </button>
-                <button
-                  onClick={() => setEditingImage(null)}
-                  className="flex-1 py-2 bg-cyan-400 text-black font-semibold rounded-lg hover:bg-cyan-500 transition-colors"
-                >
-                  Done
-                </button>
+                {/* Post Content */}
+                <div className="bg-gray-900">
+                  {/* User Info */}
+                  <div className="flex items-center p-3 border-b border-gray-700/50">
+                    <div className="w-8 h-8 bg-cyan-400 rounded-full flex items-center justify-center">
+                      <span className="text-black text-sm font-bold">U</span>
+                    </div>
+                    <div className="ml-3">
+                      <p className="text-white text-sm font-medium">username</p>
+                      <p className="text-gray-400 text-xs">{location || 'Location'}</p>
+                    </div>
+                  </div>
+                  
+                  {/* Images */}
+                  {images.length > 0 ? (
+                    <div className="aspect-[4/3] relative bg-gray-800">
+                      <Image src={images[0]} alt="Preview" fill className="object-cover" />
+                      {selectedCategory && (
+                        <div className="absolute top-2 left-2 bg-cyan-400 text-black px-2 py-1 rounded text-xs font-semibold">
+                          {selectedCategory}
+                        </div>
+                      )}
+                      {selectedAvailability && (
+                        <div className="absolute top-2 right-2 bg-green-400 text-black px-2 py-1 rounded text-xs font-semibold">
+                          {selectedAvailability}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="aspect-[4/3] bg-gray-800 flex items-center justify-center">
+                      <div className="text-center">
+                        <div className="text-4xl mb-2">📷</div>
+                        <p className="text-gray-400 text-sm">Upload an image to preview</p>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Actions */}
+                  <div className="flex items-center justify-between p-3">
+                    <div className="flex space-x-4">
+                      <span className="text-xl">❤️</span>
+                      <span className="text-xl">💬</span>
+                      <span className="text-xl">📤</span>
+                    </div>
+                    <span className="text-xl">🔖</span>
+                  </div>
+                  
+                  {/* Caption */}
+                  <div className="px-3 pb-3">
+                    <p className="text-white text-sm">
+                      <span className="font-semibold">username</span> {caption || 'Add a description to see it here...'}
+                    </p>
+                    {pricePerDay && (
+                      <div className="mt-2">
+                        <span className="bg-pink-400 text-black px-2 py-1 rounded text-xs font-semibold">
+                          ₹{pricePerDay}/day
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }
