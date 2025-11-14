@@ -1,16 +1,19 @@
 'use client';
 import Link from 'next/link';
+import Image from 'next/image';
 import { motion } from 'framer-motion';
 
 export default function Hero() {
   return (
-    <section className="relative h-screen flex items-center justify-center overflow-hidden">
+    <section className="relative h-screen flex items-center justify-center overflow-hidden" role="banner">
       {/* Background Image */}
-      <div 
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{
-          backgroundImage: "url('https://images.unsplash.com/photo-1519501025264-65ba15a82390?ixlib=rb-4.0.3&auto=format&fit=crop&w=2064&q=80')"
-        }}
+      <Image
+        src="https://images.unsplash.com/photo-1519501025264-65ba15a82390?ixlib=rb-4.0.3&auto=format&fit=crop&w=2064&q=80"
+        alt="Modern city skyline at night with glowing lights"
+        fill
+        priority
+        className="object-cover"
+        sizes="100vw"
       />
       
       {/* Overlay Gradient */}
@@ -42,16 +45,20 @@ export default function Hero() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.4 }}
           className="flex flex-col sm:flex-row gap-4 justify-center mb-12"
+          role="group"
+          aria-label="Main actions"
         >
           <Link
             href="/browse"
-            className="px-8 py-4 bg-gradient-to-r from-cyan-400 to-green-400 text-white font-semibold rounded-lg hover:from-cyan-500 hover:to-green-500 transition-all duration-300 shadow-lg hover:shadow-cyan-400/25"
+            className="px-8 py-4 bg-gradient-to-r from-cyan-400 to-green-400 text-white font-semibold rounded-lg hover:from-cyan-500 hover:to-green-500 transition-all duration-300 shadow-lg hover:shadow-cyan-400/25 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-2 focus:ring-offset-black"
+            aria-label="Browse available rental items"
           >
             Browse Rentals
           </Link>
           <Link
             href="/list-item"
-            className="px-8 py-4 border-2 border-cyan-400 text-white font-semibold rounded-lg hover:bg-cyan-400/10 transition-all duration-300"
+            className="px-8 py-4 border-2 border-cyan-400 text-white font-semibold rounded-lg hover:bg-cyan-400/10 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-2 focus:ring-offset-black"
+            aria-label="List your item for rental"
           >
             List Your Item
           </Link>
@@ -63,17 +70,19 @@ export default function Hero() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.6 }}
           className="flex flex-col sm:flex-row justify-center gap-8 text-center"
+          role="region"
+          aria-label="Platform statistics"
         >
           <div className="text-white">
-            <div className="text-3xl font-bold text-cyan-400">5K+</div>
+            <div className="text-3xl font-bold text-cyan-400" aria-label="5 thousand plus">5K+</div>
             <div className="text-gray-300">Items Listed</div>
           </div>
           <div className="text-white">
-            <div className="text-3xl font-bold text-cyan-400">2K+</div>
+            <div className="text-3xl font-bold text-cyan-400" aria-label="2 thousand plus">2K+</div>
             <div className="text-gray-300">Active Renters</div>
           </div>
           <div className="text-white">
-            <div className="text-3xl font-bold text-cyan-400">500+</div>
+            <div className="text-3xl font-bold text-cyan-400" aria-label="500 plus">500+</div>
             <div className="text-gray-300">Rental Shops</div>
           </div>
         </motion.div>

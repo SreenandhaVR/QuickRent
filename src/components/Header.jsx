@@ -38,24 +38,27 @@ export default function Header() {
           style={{ opacity: navbarOpacity }}
           transition={{ duration: 0.6 }}
           className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl px-8 py-4 shadow-lg shadow-black/10"
+          role="navigation"
+          aria-label="Main navigation"
         >
-          <div className="flex items-center gap-8">
+          <ul className="flex items-center gap-8">
             {[
               { name: 'Home', href: '/' },
               { name: 'Browse Items', href: '/browse' },
               { name: 'Rent Out', href: '/rent-out' },
               { name: 'Near Me', href: '/near-me' }
             ].map((item) => (
-              <Link
-                key={item.name}
-                href={item.href}
-                className="text-white font-semibold hover:bg-gradient-to-r hover:from-cyan-400 hover:to-green-400 hover:bg-clip-text hover:text-transparent transition-all duration-300 relative group"
-              >
-                {item.name}
-                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-cyan-400 to-green-400 group-hover:w-full transition-all duration-300"></span>
-              </Link>
+              <li key={item.name}>
+                <Link
+                  href={item.href}
+                  className="text-white font-semibold hover:bg-gradient-to-r hover:from-cyan-400 hover:to-green-400 hover:bg-clip-text hover:text-transparent transition-all duration-300 relative group focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-2 focus:ring-offset-transparent rounded px-2 py-1"
+                >
+                  {item.name}
+                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-cyan-400 to-green-400 group-hover:w-full transition-all duration-300"></span>
+                </Link>
+              </li>
             ))}
-          </div>
+          </ul>
         </motion.nav>
         
         {/* CTA Buttons */}
@@ -66,7 +69,8 @@ export default function Header() {
           <motion.div whileHover={{ boxShadow: "0 0 20px rgba(6,182,212,0.5)" }}>
             <Link
               href="/post-rental"
-              className="px-8 py-2 bg-gradient-to-r from-cyan-400 to-green-400 text-white font-semibold rounded-lg hover:from-cyan-500 hover:to-green-500 transition-all duration-300"
+              className="px-8 py-2 bg-gradient-to-r from-cyan-400 to-green-400 text-white font-semibold rounded-lg hover:from-cyan-500 hover:to-green-500 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-2 focus:ring-offset-transparent"
+              aria-label="Post a rental item"
             >
               Post a Rental
             </Link>
@@ -74,7 +78,8 @@ export default function Header() {
           <motion.div whileHover={{ boxShadow: "0 0 20px rgba(6,182,212,0.5)" }}>
             <Link
               href="/login"
-              className="px-8 py-2 border border-cyan-400 text-white font-semibold rounded-lg hover:bg-cyan-400/10 transition-all duration-300"
+              className="px-8 py-2 border border-cyan-400 text-white font-semibold rounded-lg hover:bg-cyan-400/10 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-2 focus:ring-offset-transparent"
+              aria-label="Login or register account"
             >
               Login / Register
             </Link>
