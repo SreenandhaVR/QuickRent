@@ -7,13 +7,18 @@ const nextConfig = {
         hostname: 'images.unsplash.com',
       },
     ],
+    formats: ['image/webp', 'image/avif'],
+    minimumCacheTTL: 31536000,
   },
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',
   },
   experimental: {
     optimizeCss: true,
+    optimizePackageImports: ['framer-motion'],
   },
+  poweredByHeader: false,
+  compress: true,
 }
 
 if (process.env.ANALYZE === 'true') {
