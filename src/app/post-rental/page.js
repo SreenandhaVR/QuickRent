@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Smartphone, Palette, Settings, Upload, Edit3, Crop, RotateCw, ZoomIn, ZoomOut } from 'lucide-react';
+import { Smartphone, Palette, Settings, Upload, Edit3, Crop, RotateCw, ZoomIn, ZoomOut, Heart, MessageCircle, Send, Bookmark, X, Minus, Plus } from 'lucide-react';
 
 export default function PostRental() {
   const [images, setImages] = useState([]);
@@ -30,6 +30,7 @@ export default function PostRental() {
   const [rotation, setRotation] = useState(0);
   const [aspectRatio, setAspectRatio] = useState('free');
   const [activeSection, setActiveSection] = useState('media');
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   const categories = ['Clothes', 'Electronics', 'Tools', 'Vehicles', 'Furniture', 'Party Props'];
   const availabilityOptions = ['Available Now', 'Booked till Thursday', 'Only weekends'];
@@ -266,156 +267,48 @@ export default function PostRental() {
             {/* DESIGN SECTION */}
             {activeSection === 'design' && (
               <>
-                {/* IMAGE EDITING */}
-                {editingImage !== null && (
-                  <div>
-                    <h3 className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">IMAGE EDITING</h3>
-                    <div className="bg-gray-800 rounded-lg p-4">
-                      <div className="relative w-full h-64 mb-4">
-                        <Image
-                          src={images[editingImage]}
-                          alt="Editing"
-                          fill
-                          className="object-contain rounded"
-                          style={{
-                            filter: `brightness(${brightness}%) contrast(${contrast}%)`,
-                            transform: `rotate(${rotation}deg) scale(${zoom / 100})`
-                          }}
-                        />
-                        {cropMode && (
-                          <div
-                            className="absolute border-2 border-cyan-400 bg-cyan-400/20"
-                            style={{
-                              left: `${cropPosition.x}px`,
-                              top: `${cropPosition.y}px`,
-                              width: `${cropPosition.width}px`,
-                              height: `${cropPosition.height}px`,
-                              cursor: isDragging ? 'grabbing' : 'grab'
-                            }}
-                          />
-                        )}
-                      </div>
-                      
-                      <div className="space-y-4">
-                        <div>
-                          <label className="block text-sm text-gray-300 mb-2">Brightness: {brightness}%</label>
-                          <input
-                            type="range"
-                            min="50"
-                            max="150"
-                            value={brightness}
-                            onChange={(e) => setBrightness(e.target.value)}
-                            className="w-full"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm text-gray-300 mb-2">Contrast: {contrast}%</label>
-                          <input
-                            type="range"
-                            min="50"
-                            max="150"
-                            value={contrast}
-                            onChange={(e) => setContrast(e.target.value)}
-                            className="w-full"
-                          />
-                        </div>
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => setCropMode(!cropMode)}
-                            className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
-                              cropMode ? 'bg-cyan-400 text-black' : 'bg-gray-700 text-white hover:bg-gray-600'
-                            }`}
-                          >
-                            <Crop size={16} />
-                            Crop
-                          </button>
-                          <button
-                            onClick={() => setRotation(prev => prev + 90)}
-                            className="flex items-center gap-2 px-3 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600"
-                          >
-                            <RotateCw size={16} />
-                            Rotate
-                          </button>
-                        </div>
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => setZoom(prev => Math.max(50, prev - 10))}
-                            className="flex items-center gap-2 px-3 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600"
-                          >
-                            <ZoomOut size={16} />
-                          </button>
-                          <span className="px-3 py-2 text-white">{zoom}%</span>
-                          <button
-                            onClick={() => setZoom(prev => Math.min(200, prev + 10))}
-                            className="flex items-center gap-2 px-3 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600"
-                          >
-                            <ZoomIn size={16} />
-                          </button>
-                        </div>
-                        {cropMode && (
-                          <div>
-                            <h4 className="text-sm text-gray-300 mb-2">Aspect Ratio</h4>
-                            <div className="flex gap-2">
-                              {['free', '1:1', '4:5', '16:9'].map((ratio) => (
-                                <button
-                                  key={ratio}
-                                  onClick={() => setAspectRatioConstraint(ratio)}
-                                  className={`px-3 py-1 rounded text-sm transition-colors ${
-                                    aspectRatio === ratio
-                                      ? 'bg-cyan-400 text-black'
-                                      : 'bg-gray-700 text-white hover:bg-gray-600'
-                                  }`}
-                                >
-                                  {ratio}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                        <div className="flex gap-2">
-                          <button
-                            onClick={applyCrop}
-                            className="px-4 py-2 bg-cyan-400 text-black rounded-lg hover:bg-cyan-500"
-                          >
-                            Apply Changes
-                          </button>
-                          <button
-                            onClick={() => setEditingImage(null)}
-                            className="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600"
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* CONDITION STICKERS */}
+                {/* IMAGE FILTERS */}
                 <div>
-                  <h3 className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">CONDITION</h3>
-                  <div className="grid grid-cols-2 gap-2">
-                    {['New', 'Like New', 'Good', 'Fair'].map((cond) => (
+                  <h3 className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">FILTERS</h3>
+                  <div className="grid grid-cols-3 gap-2">
+                    {['Original', 'Vintage', 'Bright', 'Warm', 'Cool', 'B&W'].map((filter) => (
                       <button
-                        key={cond}
-                        onClick={() => setCondition(cond)}
-                        className={`p-3 rounded-lg border text-center transition-colors ${
-                          condition === cond
-                            ? 'border-cyan-400 bg-cyan-400/10 text-cyan-400'
-                            : 'border-gray-600 text-gray-300 hover:border-gray-500'
-                        }`}
+                        key={filter}
+                        className="p-2 rounded-lg border text-center transition-colors border-gray-600 text-gray-300 hover:border-gray-500 text-xs"
                       >
-                        {cond}
+                        {filter}
                       </button>
                     ))}
                   </div>
-                  <input
-                    type="text"
-                    placeholder="Custom condition..."
-                    value={customCondition}
-                    onChange={(e) => setCustomCondition(e.target.value)}
-                    className="w-full mt-2 bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-cyan-400"
-                  />
+                </div>
+
+                {/* BRIGHTNESS & CONTRAST */}
+                <div>
+                  <h3 className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">ADJUSTMENTS</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm text-gray-300 mb-2">Brightness: {brightness}%</label>
+                      <input
+                        type="range"
+                        min="50"
+                        max="150"
+                        value={brightness}
+                        onChange={(e) => setBrightness(e.target.value)}
+                        className="w-full"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm text-gray-300 mb-2">Contrast: {contrast}%</label>
+                      <input
+                        type="range"
+                        min="50"
+                        max="150"
+                        value={contrast}
+                        onChange={(e) => setContrast(e.target.value)}
+                        className="w-full"
+                      />
+                    </div>
+                  </div>
                 </div>
               </>
             )}
@@ -587,7 +480,7 @@ export default function PostRental() {
                   {/* Images */}
                   {images.length > 0 ? (
                     <div className="aspect-[4/3] relative bg-gray-800">
-                      <Image src={images[0]} alt="Preview" fill className="object-cover" />
+                      <Image src={images[currentImageIndex]} alt="Preview" fill className="object-cover" />
                       {selectedCategory && (
                         <div className="absolute top-2 left-2 bg-cyan-400 text-black px-2 py-1 rounded text-xs font-semibold">
                           {selectedCategory}
@@ -598,11 +491,25 @@ export default function PostRental() {
                           {selectedAvailability}
                         </div>
                       )}
+                      {/* Image Navigation Dots */}
+                      {images.length > 1 && (
+                        <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 flex space-x-1">
+                          {images.map((_, index) => (
+                            <button
+                              key={index}
+                              onClick={() => setCurrentImageIndex(index)}
+                              className={`w-2 h-2 rounded-full transition-colors ${
+                                index === currentImageIndex ? 'bg-white' : 'bg-white/50'
+                              }`}
+                            />
+                          ))}
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <div className="aspect-[4/3] bg-gray-800 flex items-center justify-center">
                       <div className="text-center">
-                        <div className="text-4xl mb-2">📷</div>
+                        <Upload className="mx-auto mb-2 text-gray-400" size={32} />
                         <p className="text-gray-400 text-sm">Upload an image to preview</p>
                       </div>
                     </div>
@@ -611,11 +518,11 @@ export default function PostRental() {
                   {/* Actions */}
                   <div className="flex items-center justify-between p-3">
                     <div className="flex space-x-4">
-                      <span className="text-xl">❤️</span>
-                      <span className="text-xl">💬</span>
-                      <span className="text-xl">📤</span>
+                      <Heart className="text-white" size={20} />
+                      <MessageCircle className="text-white" size={20} />
+                      <Send className="text-white" size={20} />
                     </div>
-                    <span className="text-xl">🔖</span>
+                    <Bookmark className="text-white" size={20} />
                   </div>
                   
                   {/* Caption */}
@@ -637,6 +544,149 @@ export default function PostRental() {
           </div>
         </div>
       </div>
+
+      {/* Modern Crop Tool Modal */}
+      {editingImage !== null && (
+        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-900 rounded-3xl border border-gray-700/50 w-full max-w-2xl shadow-2xl">
+            {/* Header */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-700/50">
+              <h2 className="text-xl font-semibold text-white">Crop Image</h2>
+              <button
+                onClick={() => setEditingImage(null)}
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className="p-6">
+              {/* Main Crop Area */}
+              <div className="relative bg-gray-800 rounded-2xl overflow-hidden mb-6" style={{ height: '400px' }}>
+                <Image
+                  src={images[editingImage]}
+                  alt="Crop preview"
+                  fill
+                  className="object-contain"
+                  style={{
+                    transform: `scale(${zoom / 100}) rotate(${rotation}deg)`
+                  }}
+                />
+                
+                {/* Draggable Crop Box */}
+                <div 
+                  className="absolute border-2 border-cyan-400 bg-transparent z-20 cursor-move"
+                  style={{
+                    left: `${cropPosition.x}px`,
+                    top: `${cropPosition.y}px`,
+                    width: `${cropPosition.width}px`,
+                    height: `${cropPosition.height}px`,
+                    boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.5)'
+                  }}
+                >
+                  <div className="absolute -top-2 -left-2 w-4 h-4 bg-cyan-400 rounded-full border-2 border-white cursor-nw-resize"></div>
+                  <div className="absolute -top-2 -right-2 w-4 h-4 bg-cyan-400 rounded-full border-2 border-white cursor-ne-resize"></div>
+                  <div className="absolute -bottom-2 -left-2 w-4 h-4 bg-cyan-400 rounded-full border-2 border-white cursor-sw-resize"></div>
+                  <div className="absolute -bottom-2 -right-2 w-4 h-4 bg-cyan-400 rounded-full border-2 border-white cursor-se-resize"></div>
+                </div>
+              </div>
+
+              {/* Controls */}
+              <div className="space-y-6">
+                {/* Aspect Ratio Presets */}
+                <div>
+                  <label className="block text-white text-sm font-medium mb-3">Aspect Ratio</label>
+                  <div className="flex space-x-2">
+                    {[
+                      { key: 'free', label: 'Free' },
+                      { key: '1:1', label: '1:1' },
+                      { key: '4:5', label: '4:5' },
+                      { key: '16:9', label: '16:9' }
+                    ].map((ratio) => (
+                      <button
+                        key={ratio.key}
+                        onClick={() => setAspectRatioConstraint(ratio.key)}
+                        className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                          aspectRatio === ratio.key
+                            ? 'bg-cyan-400 text-black'
+                            : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                        }`}
+                      >
+                        {ratio.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Zoom and Rotate Controls */}
+                <div className="grid grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-white text-sm font-medium mb-3">Zoom ({zoom}%)</label>
+                    <div className="flex items-center space-x-3">
+                      <button
+                        onClick={() => setZoom(Math.max(50, zoom - 10))}
+                        className="w-8 h-8 bg-gray-700 hover:bg-gray-600 rounded-lg flex items-center justify-center text-white transition-colors"
+                      >
+                        <Minus size={16} />
+                      </button>
+                      <input
+                        type="range"
+                        min="50"
+                        max="200"
+                        value={zoom}
+                        onChange={(e) => setZoom(e.target.value)}
+                        className="flex-1"
+                      />
+                      <button
+                        onClick={() => setZoom(Math.min(200, zoom + 10))}
+                        className="w-8 h-8 bg-gray-700 hover:bg-gray-600 rounded-lg flex items-center justify-center text-white transition-colors"
+                      >
+                        <Plus size={16} />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-white text-sm font-medium mb-3">Rotate ({rotation}°)</label>
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => setRotation(rotation - 90)}
+                        className="px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-white text-sm transition-colors flex items-center gap-2"
+                      >
+                        <RotateCw size={16} className="transform scale-x-[-1]" />
+                        90°
+                      </button>
+                      <button
+                        onClick={() => setRotation(rotation + 90)}
+                        className="px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-white text-sm transition-colors flex items-center gap-2"
+                      >
+                        <RotateCw size={16} />
+                        90°
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom Actions */}
+            <div className="flex space-x-4 p-6 border-t border-gray-700/50">
+              <button
+                onClick={() => setEditingImage(null)}
+                className="flex-1 py-3 text-center text-gray-300 border border-gray-600 rounded-xl hover:bg-gray-800 transition-colors font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={applyCrop}
+                className="flex-1 py-3 bg-gradient-to-r from-cyan-400 to-green-400 text-white font-semibold rounded-xl hover:from-cyan-500 hover:to-green-500 transition-all shadow-lg"
+              >
+                Apply Crop
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
