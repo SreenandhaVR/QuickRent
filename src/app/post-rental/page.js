@@ -31,6 +31,8 @@ export default function PostRental() {
   const [aspectRatio, setAspectRatio] = useState('free');
   const [activeSection, setActiveSection] = useState('media');
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [userTags, setUserTags] = useState([]);
+  const [tagInput, setTagInput] = useState('');
 
   const categories = ['Clothes', 'Electronics', 'Tools', 'Vehicles', 'Furniture', 'Party Props'];
   const availabilityOptions = ['Available Now', 'Booked till Thursday', 'Only weekends'];
@@ -261,55 +263,215 @@ export default function PostRental() {
                     ))}
                   </div>
                 </div>
+
+                {/* USER TAGS */}
+                <div>
+                  <h3 className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">TAGS</h3>
+                  <div className="flex gap-2 mb-2">
+                    <input
+                      type="text"
+                      placeholder="Add tags (e.g. vintage, designer)..."
+                      value={tagInput}
+                      onChange={(e) => setTagInput(e.target.value)}
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter' && tagInput.trim()) {
+                          setUserTags(prev => [...prev, tagInput.trim()]);
+                          setTagInput('');
+                        }
+                      }}
+                      className="flex-1 bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 text-sm focus:outline-none focus:border-cyan-400"
+                    />
+                    <button
+                      onClick={() => {
+                        if (tagInput.trim()) {
+                          setUserTags(prev => [...prev, tagInput.trim()]);
+                          setTagInput('');
+                        }
+                      }}
+                      className="px-3 py-2 bg-cyan-400 text-black rounded-lg hover:bg-cyan-500 transition-colors text-sm"
+                    >
+                      Add
+                    </button>
+                  </div>
+                  {userTags.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {userTags.map((tag, index) => (
+                        <span
+                          key={index}
+                          className="inline-flex items-center gap-1 px-2 py-1 bg-cyan-400/20 text-cyan-400 rounded text-xs"
+                        >
+                          #{tag}
+                          <button
+                            onClick={() => setUserTags(prev => prev.filter((_, i) => i !== index))}
+                            className="text-cyan-400 hover:text-cyan-300"
+                          >
+                            <X size={12} />
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </>
             )}
 
             {/* DESIGN SECTION */}
             {activeSection === 'design' && (
               <>
-                {/* IMAGE FILTERS */}
-                <div>
-                  <h3 className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">FILTERS</h3>
-                  <div className="grid grid-cols-3 gap-2">
-                    {['Original', 'Vintage', 'Bright', 'Warm', 'Cool', 'B&W'].map((filter) => (
+                {editingImage !== null ? (
+                  <>
+                    {/* BACK TO GALLERY */}
+                    <div className="flex items-center gap-3 mb-4">
                       <button
-                        key={filter}
-                        className="p-2 rounded-lg border text-center transition-colors border-gray-600 text-gray-300 hover:border-gray-500 text-xs"
+                        onClick={() => setEditingImage(null)}
+                        className="flex items-center gap-2 px-3 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors"
                       >
-                        {filter}
+                        <X size={16} />
+                        Back to Gallery
                       </button>
-                    ))}
-                  </div>
-                </div>
+                      <span className="text-gray-400 text-sm">Editing Image {editingImage + 1}</span>
+                    </div>
 
-                {/* BRIGHTNESS & CONTRAST */}
-                <div>
-                  <h3 className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">ADJUSTMENTS</h3>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm text-gray-300 mb-2">Brightness: {brightness}%</label>
-                      <input
-                        type="range"
-                        min="50"
-                        max="150"
-                        value={brightness}
-                        onChange={(e) => setBrightness(e.target.value)}
-                        className="w-full"
-                      />
+                    {/* IMAGE PREVIEW */}
+                    <div className="mb-4">
+                      <div className="relative w-full h-48 bg-gray-800 rounded-lg overflow-hidden">
+                        <Image
+                          src={images[editingImage]}
+                          alt="Editing"
+                          fill
+                          className="object-contain"
+                          style={{
+                            filter: `brightness(${brightness}%) contrast(${contrast}%)`,
+                            transform: `rotate(${rotation}deg) scale(${zoom / 100})`
+                          }}
+                        />
+                      </div>
                     </div>
-                    <div>
-                      <label className="block text-sm text-gray-300 mb-2">Contrast: {contrast}%</label>
-                      <input
-                        type="range"
-                        min="50"
-                        max="150"
-                        value={contrast}
-                        onChange={(e) => setContrast(e.target.value)}
-                        className="w-full"
-                      />
+
+                    {/* CROP CONTROLS */}
+                    <div className="mb-4">
+                      <h3 className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">CROP</h3>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setCropMode(!cropMode)}
+                          className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+                            cropMode ? 'bg-cyan-400 text-black' : 'bg-gray-700 text-white hover:bg-gray-600'
+                          }`}
+                        >
+                          <Crop size={16} />
+                          {cropMode ? 'Exit Crop' : 'Crop'}
+                        </button>
+                        <button
+                          onClick={() => setRotation(prev => prev + 90)}
+                          className="flex items-center gap-2 px-3 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600"
+                        >
+                          <RotateCw size={16} />
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                </div>
+
+                    {/* ADJUSTMENTS */}
+                    <div className="mb-4">
+                      <h3 className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">ADJUSTMENTS</h3>
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm text-gray-300 mb-2">Brightness: {brightness}%</label>
+                          <input
+                            type="range"
+                            min="50"
+                            max="150"
+                            value={brightness}
+                            onChange={(e) => setBrightness(e.target.value)}
+                            className="w-full"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm text-gray-300 mb-2">Contrast: {contrast}%</label>
+                          <input
+                            type="range"
+                            min="50"
+                            max="150"
+                            value={contrast}
+                            onChange={(e) => setContrast(e.target.value)}
+                            className="w-full"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm text-gray-300 mb-2">Zoom: {zoom}%</label>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => setZoom(prev => Math.max(50, prev - 10))}
+                              className="w-8 h-8 bg-gray-700 hover:bg-gray-600 rounded-lg flex items-center justify-center text-white"
+                            >
+                              <Minus size={16} />
+                            </button>
+                            <input
+                              type="range"
+                              min="50"
+                              max="200"
+                              value={zoom}
+                              onChange={(e) => setZoom(e.target.value)}
+                              className="flex-1"
+                            />
+                            <button
+                              onClick={() => setZoom(prev => Math.min(200, prev + 10))}
+                              className="w-8 h-8 bg-gray-700 hover:bg-gray-600 rounded-lg flex items-center justify-center text-white"
+                            >
+                              <Plus size={16} />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* APPLY CHANGES */}
+                    <div className="flex gap-2">
+                      <button
+                        onClick={applyCrop}
+                        className="flex-1 py-2 bg-cyan-400 text-black rounded-lg hover:bg-cyan-500 transition-colors font-medium"
+                      >
+                        Apply Changes
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {/* IMAGE FILTERS */}
+                    <div>
+                      <h3 className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">FILTERS</h3>
+                      <div className="grid grid-cols-3 gap-2">
+                        {['Original', 'Vintage', 'Bright', 'Warm', 'Cool', 'B&W'].map((filter) => (
+                          <button
+                            key={filter}
+                            className="p-2 rounded-lg border text-center transition-colors border-gray-600 text-gray-300 hover:border-gray-500 text-xs"
+                          >
+                            {filter}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* SELECT IMAGE TO EDIT */}
+                    {images.length > 0 && (
+                      <div>
+                        <h3 className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">EDIT IMAGES</h3>
+                        <div className="grid grid-cols-4 gap-2">
+                          {images.map((img, index) => (
+                            <div key={index} className="aspect-square relative group">
+                              <Image src={img} alt={`Photo ${index + 1}`} fill className="object-cover rounded-lg" />
+                              <button
+                                onClick={() => setEditingImage(index)}
+                                className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-lg"
+                              >
+                                <Edit3 className="text-white" size={16} />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
               </>
             )}
 
