@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "analyze": "ANALYZE=true next build",
     "start": "next start",
     "lint": "next lint"
   },
@@ -15,6 +16,7 @@
     "framer-motion": "^11.11.17"
   },
   "devDependencies": {
+    "@next/bundle-analyzer": "^16.0.1",
     "eslint": "^9",
     "eslint-config-next": "16.0.1",
     "postcss": "^8",

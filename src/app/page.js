@@ -1,6 +1,16 @@
-import Header from '../components/Header'
-import Hero from '../components/Hero'
-import Footer from '../components/Footer'
+import dynamic from 'next/dynamic'
+
+const Header = dynamic(() => import('../components/Header'), {
+  ssr: false,
+})
+
+const Hero = dynamic(() => import('../components/Hero'), {
+  loading: () => <div className="h-screen bg-black" />,
+})
+
+const Footer = dynamic(() => import('../components/Footer'), {
+  ssr: false,
+})
 
 export default function Home() {
   return (
