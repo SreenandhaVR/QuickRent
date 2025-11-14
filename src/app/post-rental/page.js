@@ -19,12 +19,14 @@ export default function PostRental() {
   const [showPreview, setShowPreview] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState('');
   const [postTheme, setPostTheme] = useState('minimal');
-  const [showLocationPicker, setShowLocationPicker] = useState(false);
   const [editingImage, setEditingImage] = useState(null);
   const [brightness, setBrightness] = useState(100);
   const [contrast, setContrast] = useState(100);
   const [condition, setCondition] = useState('');
   const [customCondition, setCustomCondition] = useState('');
+  const [cropMode, setCropMode] = useState(false);
+  const [cropPosition, setCropPosition] = useState({ x: 16, y: 16, width: 200, height: 200 });
+  const [isDragging, setIsDragging] = useState(false);
 
   const categories = ['Clothes', 'Electronics', 'Tools', 'Vehicles', 'Furniture', 'Party Props'];
   const availabilityOptions = ['Available Now', 'Booked till Thursday', 'Only weekends'];
@@ -64,6 +66,42 @@ export default function PostRental() {
     setSelectedTemplate(templateKey);
   };
 
+  const applyCrop = () => {
+    if (editingImage === null) return;
+    
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const img = new window.Image();
+    
+    img.onload = () => {
+      const scaleX = img.width / 256; // Assuming preview is 256px
+      const scaleY = img.height / 256;
+      
+      canvas.width = cropPosition.width * scaleX;
+      canvas.height = cropPosition.height * scaleY;
+      
+      ctx.drawImage(
+        img,
+        cropPosition.x * scaleX,
+        cropPosition.y * scaleY,
+        cropPosition.width * scaleX,
+        cropPosition.height * scaleY,
+        0,
+        0,
+        canvas.width,
+        canvas.height
+      );
+      
+      const croppedImageUrl = canvas.toDataURL();
+      setImages(prev => prev.map((image, index) => 
+        index === editingImage ? croppedImageUrl : image
+      ));
+      setCropMode(false);
+    };
+    
+    img.src = images[editingImage];
+  };
+
   return (
     <div className="min-h-screen bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
       <div className="bg-gray-900 rounded-2xl border border-gray-700 w-full max-w-lg max-h-[95vh] overflow-y-auto">
@@ -92,6 +130,12 @@ export default function PostRental() {
                   className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-lg"
                 >
                   <span className="text-white text-lg">✏️</span>
+                </button>
+                <button
+                  onClick={() => setImages(prev => prev.filter((_, i) => i !== index))}
+                  className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <span className="text-white text-xs">✕</span>
                 </button>
               </div>
             ))}
@@ -437,6 +481,61 @@ export default function PostRental() {
                     filter: `brightness(${brightness}%) contrast(${contrast}%)`
                   }}
                 />
+                <button
+                  onClick={() => setCropMode(!cropMode)}
+                  className={`absolute bottom-2 right-2 w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
+                    cropMode
+                      ? 'bg-cyan-400 text-black'
+                      : 'bg-black/50 text-white hover:bg-black/70'
+                  }`}
+                >
+                  <span className="text-sm">✂️</span>
+                </button>
+                {cropMode && (
+                  <div 
+                    className="absolute border-2 border-dashed border-cyan-400 bg-black/20 cursor-move"
+                    style={{
+                      left: `${cropPosition.x}px`,
+                      top: `${cropPosition.y}px`,
+                      width: `${cropPosition.width}px`,
+                      height: `${cropPosition.height}px`
+                    }}
+                    onMouseDown={(e) => {
+                      setIsDragging(true);
+                      const rect = e.currentTarget.parentElement.getBoundingClientRect();
+                      const offsetX = e.clientX - rect.left - cropPosition.x;
+                      const offsetY = e.clientY - rect.top - cropPosition.y;
+                      
+                      const handleMouseMove = (e) => {
+                        const newX = e.clientX - rect.left - offsetX;
+                        const newY = e.clientY - rect.top - offsetY;
+                        setCropPosition(prev => ({
+                          ...prev,
+                          x: Math.max(0, Math.min(newX, rect.width - prev.width)),
+                          y: Math.max(0, Math.min(newY, rect.height - prev.height))
+                        }));
+                      };
+                      
+                      const handleMouseUp = () => {
+                        setIsDragging(false);
+                        document.removeEventListener('mousemove', handleMouseMove);
+                        document.removeEventListener('mouseup', handleMouseUp);
+                      };
+                      
+                      document.addEventListener('mousemove', handleMouseMove);
+                      document.addEventListener('mouseup', handleMouseUp);
+                    }}
+                  >
+                    <div className="absolute -top-1 -left-1 w-3 h-3 bg-cyan-400 rounded-full cursor-nw-resize"></div>
+                    <div className="absolute -top-1 -right-1 w-3 h-3 bg-cyan-400 rounded-full cursor-ne-resize"></div>
+                    <div className="absolute -bottom-1 -left-1 w-3 h-3 bg-cyan-400 rounded-full cursor-sw-resize"></div>
+                    <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-cyan-400 rounded-full cursor-se-resize"></div>
+                    <div className="absolute top-1/2 -translate-y-1/2 -left-1 w-3 h-3 bg-cyan-400 rounded-full cursor-w-resize"></div>
+                    <div className="absolute top-1/2 -translate-y-1/2 -right-1 w-3 h-3 bg-cyan-400 rounded-full cursor-e-resize"></div>
+                    <div className="absolute left-1/2 -translate-x-1/2 -top-1 w-3 h-3 bg-cyan-400 rounded-full cursor-n-resize"></div>
+                    <div className="absolute left-1/2 -translate-x-1/2 -bottom-1 w-3 h-3 bg-cyan-400 rounded-full cursor-s-resize"></div>
+                  </div>
+                )}
                 {condition && (
                   <div className="absolute top-2 right-2 bg-cyan-400 text-black px-2 py-1 rounded text-xs font-semibold">
                     {condition}
@@ -509,6 +608,16 @@ export default function PostRental() {
                   </button>
                 </div>
               </div>
+
+              {/* Crop Button */}
+              {cropMode && (
+                <button
+                  onClick={applyCrop}
+                  className="w-full py-2 bg-green-500 text-white font-semibold rounded-lg hover:bg-green-600 transition-colors"
+                >
+                  Apply Crop
+                </button>
+              )}
 
               {/* Action Buttons */}
               <div className="flex space-x-3 pt-4">
