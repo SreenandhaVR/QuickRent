@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Eye, EyeOff, Mail, Lock, ArrowRight } from 'lucide-react';
 import { useLoading } from '../../contexts/LoadingContext';
@@ -10,6 +10,15 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const { loading, setLoading } = useLoading();
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      setMousePosition({ x: e.clientX, y: e.clientY });
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -70,59 +79,98 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <Link href="/" className="inline-block mb-4">
-            <span className="text-2xl font-bold text-white">
-              <span className="text-cyan-400">Q</span>uickRent
-            </span>
-          </Link>
-          <h1 className="text-2xl font-bold text-white mb-2">Welcome Back</h1>
-          <p className="text-gray-400">Sign in to your QuickRent account</p>
+    <div className="h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Mouse Follower Glow */}
+      <div 
+        className="absolute w-96 h-96 bg-cyan-400/20 rounded-full blur-3xl pointer-events-none transition-all duration-[3500ms] ease-out"
+        style={{
+          left: mousePosition.x - 192,
+          top: mousePosition.y - 192,
+        }}
+      ></div>
+
+      {/* Animated Background */}
+      <div className="absolute inset-0 opacity-20">
+        <div className="absolute top-20 left-20 w-72 h-72 bg-cyan-400 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-20 right-20 w-96 h-96 bg-blue-500 rounded-full blur-3xl animate-pulse" style={{animationDelay: '1s'}}></div>
+      </div>
+
+      {/* Large Q Shape Container */}
+      <div className="relative z-10 w-full max-w-xl">
+        {/* Giant Q Background */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <svg viewBox="0 0 200 200" className="w-full h-full opacity-30">
+            <defs>
+              <linearGradient id="qGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style={{stopColor: '#22d3ee', stopOpacity: 0.6}} />
+                <stop offset="100%" style={{stopColor: '#3b82f6', stopOpacity: 0.6}} />
+              </linearGradient>
+            </defs>
+            <circle cx="100" cy="100" r="60" fill="none" stroke="url(#qGradient)" strokeWidth="12"/>
+            <line x1="140" y1="140" x2="160" y2="160" stroke="url(#qGradient)" strokeWidth="12" strokeLinecap="round"/>
+          </svg>
         </div>
 
+        {/* Login Form Container */}
+        <div className="relative backdrop-blur-2xl bg-gradient-to-br from-gray-800/30 to-gray-900/30 rounded-[2rem] p-6 shadow-[0_8px_32px_0_rgba(34,211,238,0.15)] hover:shadow-[0_8px_48px_0_rgba(34,211,238,0.25)] transition-all duration-[1000ms] ease-in-out">
+          {/* Logo */}
+          <div className="text-center mb-6">
+            <Link href="/" className="inline-block mb-3" aria-label="Go to QuickRent homepage">
+              <span className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
+                QuickRent
+              </span>
+            </Link>
+            <h1 className="text-2xl font-bold text-white mb-1 tracking-tight">Sign In</h1>
+            <p className="text-cyan-400/70 text-xs">Continue your rental journey</p>
+          </div>
+
         {/* Login Form */}
-        <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700">
-          <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="max-w-md mx-auto">
+          <form onSubmit={handleSubmit}>
             {/* Email Field */}
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+            <div className="relative mb-5">
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full bg-transparent border-0 border-b-2 border-gray-600 py-3 text-cyan-400 placeholder-transparent focus:outline-none focus:border-cyan-400 transition-all duration-500 peer"
+                placeholder="Email"
+                id="email"
+                name="email"
+                autoComplete="email"
+                aria-label="Email address"
+                required
+              />
+              <label htmlFor="email" className="absolute left-0 -top-3.5 text-gray-400 text-sm transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-3 peer-focus:-top-3.5 peer-focus:text-cyan-400 peer-focus:text-sm">
                 Email Address
               </label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent"
-                  placeholder="Enter your email"
-                  required
-                />
-              </div>
+              <Mail className="absolute right-0 top-3 text-cyan-400/50" size={18} aria-hidden="true" />
             </div>
 
             {/* Password Field */}
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+            <div className="relative mb-5">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full bg-transparent border-0 border-b-2 border-gray-600 py-3 text-cyan-400 placeholder-transparent focus:outline-none focus:border-cyan-400 transition-all duration-500 peer"
+                placeholder="Password"
+                id="password"
+                name="password"
+                autoComplete="current-password"
+                aria-label="Password"
+                required
+              />
+              <label htmlFor="password" className="absolute left-0 -top-3.5 text-gray-400 text-sm transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-3 peer-focus:-top-3.5 peer-focus:text-cyan-400 peer-focus:text-sm">
                 Password
               </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-10 pr-12 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent"
-                  placeholder="Enter your password"
-                  required
-                />
+              <div className="absolute right-0 top-3 flex gap-2">
+                <Lock className="text-cyan-400/50" size={18} aria-hidden="true" />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-300"
+                  className="text-gray-400 hover:text-cyan-400 transition-colors"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
@@ -130,18 +178,23 @@ export default function Login() {
             </div>
 
             {/* Remember Me & Forgot Password */}
-            <div className="flex items-center justify-between">
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                  className="w-4 h-4 text-cyan-400 bg-gray-700 border-gray-600 rounded focus:ring-cyan-400 focus:ring-2"
-                />
-                <span className="ml-2 text-sm text-gray-300">Remember me</span>
+            <div className="flex items-center justify-between mb-4">
+              <label className="flex items-center cursor-pointer group">
+                <div className="relative">
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    className="sr-only"
+                  />
+                  <div className={`w-5 h-5 border-2 rounded transition-all duration-300 ${rememberMe ? 'border-cyan-400 bg-cyan-400' : 'border-gray-500'}`}>
+                    {rememberMe && <ArrowRight className="text-black" size={16} />}
+                  </div>
+                </div>
+                <span className="ml-3 text-sm text-gray-300 group-hover:text-white transition-colors">Keep me signed in</span>
               </label>
-              <Link href="/forgot-password" className="text-sm text-cyan-400 hover:text-cyan-300">
-                Forgot password?
+              <Link href="/forgot-password" className="text-sm text-cyan-400 hover:text-cyan-300 transition-colors underline-offset-4 hover:underline">
+                Reset Password
               </Link>
             </div>
 
@@ -149,41 +202,47 @@ export default function Login() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-cyan-400 text-black font-semibold py-3 px-4 rounded-lg hover:bg-cyan-300 transition-colors flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              aria-label="Sign in to your account"
+              className="w-full bg-gradient-to-r from-cyan-400 via-blue-500 to-cyan-400 text-black font-bold py-3 px-6 rounded-2xl transition-all duration-[800ms] ease-out flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(34,211,238,0.5)] group"
             >
-              <span>Sign In</span>
-              <ArrowRight size={18} />
+              <span>Enter</span>
+              <ArrowRight className="group-hover:translate-x-1 transition-transform duration-300" size={20} aria-hidden="true" />
             </button>
           </form>
 
-          {/* Divider */}
-          <div className="my-6 flex items-center">
-            <div className="flex-1 border-t border-gray-600"></div>
-            <span className="px-4 text-gray-400 text-sm">or</span>
-            <div className="flex-1 border-t border-gray-600"></div>
-          </div>
-
-          {/* Social Login */}
-          <div className="space-y-3">
-            <button className="w-full bg-gray-700 text-white font-medium py-3 px-4 rounded-lg hover:bg-gray-600 transition-colors border border-gray-600">
-              Continue with Google
-            </button>
-            <button className="w-full bg-gray-700 text-white font-medium py-3 px-4 rounded-lg hover:bg-gray-600 transition-colors border border-gray-600">
-              Continue with Facebook
-            </button>
+          {/* Sign Up Link */}
+          <div className="text-center mt-4">
+            <p className="text-gray-400 text-sm">
+              Don't have an account?{' '}
+              <Link href="/register" className="text-cyan-400 hover:text-cyan-300 font-medium">
+                Sign up
+              </Link>
+            </p>
           </div>
         </div>
-
-        {/* Sign Up Link */}
-        <div className="text-center mt-6">
-          <p className="text-gray-400">
-            Don't have an account?{' '}
-            <Link href="/register" className="text-cyan-400 hover:text-cyan-300 font-medium">
-              Sign up
-            </Link>
-          </p>
         </div>
       </div>
+
+      <style jsx>{`
+        @keyframes float {
+          0%, 100% {
+            transform: translateY(0) translateX(0);
+            opacity: 0;
+          }
+          10% {
+            opacity: 1;
+          }
+          90% {
+            opacity: 1;
+          }
+          50% {
+            transform: translateY(-100px) translateX(50px);
+          }
+        }
+        .animate-float {
+          animation: float linear infinite;
+        }
+      `}</style>
     </div>
   );
 }
