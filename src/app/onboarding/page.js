@@ -3,6 +3,75 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { ArrowRight, ArrowLeft, Check, MapPin, Camera, User, Star } from 'lucide-react';
 
+// Location Step Component with autocomplete
+const LocationStep = ({ formData, setFormData }) => {
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  
+  const popularLocations = [
+    'New York, NY', 'Los Angeles, CA', 'Chicago, IL', 'Houston, TX', 'Phoenix, AZ',
+    'Philadelphia, PA', 'San Antonio, TX', 'San Diego, CA', 'Dallas, TX', 'San Jose, CA',
+    'Austin, TX', 'Jacksonville, FL', 'Fort Worth, TX', 'Columbus, OH', 'Charlotte, NC',
+    'San Francisco, CA', 'Indianapolis, IN', 'Seattle, WA', 'Denver, CO', 'Washington, DC',
+    'Boston, MA', 'El Paso, TX', 'Nashville, TN', 'Detroit, MI', 'Oklahoma City, OK',
+    'Portland, OR', 'Las Vegas, NV', 'Memphis, TN', 'Louisville, KY', 'Baltimore, MD'
+  ];
+
+  const handleLocationChange = (value) => {
+    setFormData({...formData, location: value});
+    
+    if (value.length > 1) {
+      const filtered = popularLocations.filter(location => 
+        location.toLowerCase().includes(value.toLowerCase())
+      ).slice(0, 5);
+      setSuggestions(filtered);
+      setShowSuggestions(true);
+    } else {
+      setShowSuggestions(false);
+    }
+  };
+
+  const selectSuggestion = (location) => {
+    setFormData({...formData, location});
+    setShowSuggestions(false);
+  };
+
+  return (
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold text-white text-center">Where are you located?</h2>
+      <div className="relative">
+        <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+        <input
+          type="text"
+          value={formData.location}
+          onChange={(e) => handleLocationChange(e.target.value)}
+          onFocus={() => formData.location.length > 1 && setShowSuggestions(true)}
+          className="w-full pl-12 pr-4 py-4 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400"
+          placeholder="Enter your city or zip code"
+        />
+        
+        {showSuggestions && suggestions.length > 0 && (
+          <div className="absolute top-full left-0 right-0 mt-1 bg-gray-700 border border-gray-600 rounded-lg shadow-lg z-10 max-h-48 overflow-y-auto">
+            {suggestions.map((location, index) => (
+              <button
+                key={index}
+                onClick={() => selectSuggestion(location)}
+                className="w-full text-left px-4 py-3 hover:bg-gray-600 text-white border-b border-gray-600 last:border-b-0 flex items-center gap-2"
+              >
+                <MapPin size={16} className="text-gray-400" />
+                {location}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+      <p className="text-gray-400 text-sm text-center">
+        This helps us show you items available in your area
+      </p>
+    </div>
+  );
+};
+
 export default function Onboarding() {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
@@ -140,22 +209,7 @@ export default function Onboarding() {
 
           {/* Step 3: Location */}
           {currentStep === 3 && (
-            <div className="space-y-6">
-              <h2 className="text-2xl font-bold text-white text-center">Where are you located?</h2>
-              <div className="relative">
-                <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-                <input
-                  type="text"
-                  value={formData.location}
-                  onChange={(e) => setFormData({...formData, location: e.target.value})}
-                  className="w-full pl-12 pr-4 py-4 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400"
-                  placeholder="Enter your city or zip code"
-                />
-              </div>
-              <p className="text-gray-400 text-sm text-center">
-                This helps us show you items available in your area
-              </p>
-            </div>
+            <LocationStep formData={formData} setFormData={setFormData} />
           )}
 
           {/* Step 4: Interests */}
