@@ -11,33 +11,56 @@ export default function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log('Login form submitted');
+    console.log('Email:', email);
+    console.log('Password length:', password.length);
+    
     try {
+      console.log('Making API request to /api/auth/login');
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
       });
       
-      const data = await response.json();
+      console.log('Response status:', response.status);
+      console.log('Response ok:', response.ok);
+      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+      console.log('Response URL:', response.url);
+      
+      const responseText = await response.text();
+      console.log('Raw response length:', responseText.length);
+      console.log('Raw response:', responseText);
+      
+      let data;
+      try {
+        data = JSON.parse(responseText);
+        console.log('Parsed JSON data:', data);
+      } catch (parseError) {
+        console.error('Failed to parse JSON:', parseError);
+        console.log('Response was not JSON, likely an error page');
+        console.log('First 500 chars of response:', responseText.substring(0, 500));
+        throw new Error('Server returned an error page instead of JSON');
+      }
       
       if (response.ok) {
+        console.log('✅ Login successful!');
+        console.log('📄 Response data:', data);
+        console.log('🔑 Token received:', data.token);
+        console.log('👤 User data:', data.user);
         localStorage.setItem('token', data.token);
-        // Check if user completed onboarding
-        const userResponse = await fetch('/api/user/profile', {
-          headers: { 'Authorization': `Bearer ${data.token}` }
-        });
-        const userData = await userResponse.json();
-        
-        if (userData.onboardingCompleted) {
-          window.location.href = '/dashboard';
-        } else {
-          window.location.href = '/onboarding';
-        }
+        console.log('💾 Token stored in localStorage');
+        alert('Login successful!');
+        window.location.href = '/dashboard';
       } else {
+        console.log('❌ Login failed with status:', response.status);
+        console.log('📄 Error response:', data);
+        console.log('🚫 Error message:', data.error);
         alert(data.error || 'Login failed');
       }
     } catch (error) {
-      alert('Login failed');
+      console.error('Login error:', error);
+      alert('Login failed: ' + error.message);
     }
   };
 
