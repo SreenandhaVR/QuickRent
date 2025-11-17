@@ -1,14 +1,10 @@
 import { MongoClient } from 'mongodb';
 
-const uri = process.env.MONGODB_URI;
+const uri = process.env.MONGODB_URI || 'mongodb://localhost:27017/quickrent';
 const options = {};
 
 let client;
 let clientPromise;
-
-if (!process.env.MONGODB_URI) {
-  throw new Error('Please add your Mongo URI to .env.local');
-}
 
 if (process.env.NODE_ENV === 'development') {
   if (!global._mongoClientPromise) {
