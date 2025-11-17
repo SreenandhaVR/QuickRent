@@ -48,7 +48,7 @@ export default function Register() {
     return 'Strong';
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (formData.password !== formData.confirmPassword) {
       alert('Passwords do not match');
@@ -58,8 +58,26 @@ export default function Register() {
       alert('Please agree to the terms and conditions');
       return;
     }
-    // Handle registration logic here
-    console.log('Registration attempt:', formData);
+    
+    try {
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok) {
+        localStorage.setItem('token', data.token);
+        alert('Registration successful!');
+        // Redirect to dashboard or home
+      } else {
+        alert(data.error || 'Registration failed');
+      }
+    } catch (error) {
+      alert('Registration failed');
+    }
   };
 
   return (
