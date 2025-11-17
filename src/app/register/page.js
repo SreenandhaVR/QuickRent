@@ -70,8 +70,7 @@ export default function Register() {
       
       if (response.ok) {
         localStorage.setItem('token', data.token);
-        alert('Registration successful!');
-        // Redirect to dashboard or home
+        window.location.href = '/onboarding';
       } else {
         alert(data.error || 'Registration failed');
       }

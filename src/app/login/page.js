@@ -22,8 +22,17 @@ export default function Login() {
       
       if (response.ok) {
         localStorage.setItem('token', data.token);
-        alert('Login successful!');
-        // Redirect to dashboard or home
+        // Check if user completed onboarding
+        const userResponse = await fetch('/api/user/profile', {
+          headers: { 'Authorization': `Bearer ${data.token}` }
+        });
+        const userData = await userResponse.json();
+        
+        if (userData.onboardingCompleted) {
+          window.location.href = '/dashboard';
+        } else {
+          window.location.href = '/onboarding';
+        }
       } else {
         alert(data.error || 'Login failed');
       }
