@@ -22,6 +22,7 @@ const nextConfig = {
   },
   poweredByHeader: false,
   compress: true,
+  output: 'standalone',
 }
 
 if (process.env.ANALYZE === 'true') {
