@@ -1,4 +1,5 @@
 import './global.css'
+import { LoadingProvider } from '../contexts/LoadingContext'
 
 export const metadata = {
   title: 'QuickRent - Your Trusted Rental Partner',
@@ -62,15 +63,17 @@ export default function RootLayout({ children }) {
         <meta name="theme-color" content="#000000" />
       </head>
       <body className="antialiased">
-        <div id="skip-link">
-          <a 
-            href="#main-content" 
-            className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-cyan-400 text-black px-4 py-2 rounded z-50"
-          >
-            Skip to main content
-          </a>
-        </div>
-        {children}
+        <LoadingProvider>
+          <div id="skip-link">
+            <a 
+              href="#main-content" 
+              className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-cyan-400 text-black px-4 py-2 rounded z-50"
+            >
+              Skip to main content
+            </a>
+          </div>
+          {children}
+        </LoadingProvider>
       </body>
     </html>
   )

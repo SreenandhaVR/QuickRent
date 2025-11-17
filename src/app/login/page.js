@@ -2,15 +2,18 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { Eye, EyeOff, Mail, Lock, ArrowRight } from 'lucide-react';
+import { useLoading } from '../../contexts/LoadingContext';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const { loading, setLoading } = useLoading();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
     console.log('Login form submitted');
     console.log('Email:', email);
     console.log('Password length:', password.length);
@@ -61,6 +64,8 @@ export default function Login() {
     } catch (error) {
       console.error('Login error:', error);
       alert('Login failed: ' + error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -143,7 +148,8 @@ export default function Login() {
             {/* Login Button */}
             <button
               type="submit"
-              className="w-full bg-cyan-400 text-black font-semibold py-3 px-4 rounded-lg hover:bg-cyan-300 transition-colors flex items-center justify-center space-x-2"
+              disabled={loading}
+              className="w-full bg-cyan-400 text-black font-semibold py-3 px-4 rounded-lg hover:bg-cyan-300 transition-colors flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <span>Sign In</span>
               <ArrowRight size={18} />
