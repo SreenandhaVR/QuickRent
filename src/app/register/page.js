@@ -5,6 +5,8 @@ import { Eye, EyeOff, Mail, Lock, User, Phone } from 'lucide-react';
 import { useLoading } from '@/contexts/LoadingContext';
 import Toast from '@/components/Toast';
 
+export const dynamic = 'force-dynamic';
+
 export default function Register() {
   const { loading, setLoading } = useLoading();
   const [formData, setFormData] = useState({
