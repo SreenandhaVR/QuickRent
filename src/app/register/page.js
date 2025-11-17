@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Eye, EyeOff, Mail, Lock, User, Phone } from 'lucide-react';
 import { useLoading } from '@/contexts/LoadingContext';
+import Toast from '@/components/Toast';
 
 export default function Register() {
   const { loading, setLoading } = useLoading();
@@ -19,6 +20,7 @@ export default function Register() {
   const [agreeToTerms, setAgreeToTerms] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState(0);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [toast, setToast] = useState(null);
 
   useEffect(() => {
     const handleMouseMove = (e) => {
@@ -62,11 +64,11 @@ export default function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (formData.password !== formData.confirmPassword) {
-      alert('Passwords do not match');
+      setToast('Passwords do not match');
       return;
     }
     if (!agreeToTerms) {
-      alert('Please agree to the terms and conditions');
+      setToast('Please agree to the terms and conditions');
       return;
     }
     
@@ -84,17 +86,19 @@ export default function Register() {
         localStorage.setItem('token', data.token);
         window.location.href = '/onboarding';
       } else {
-        alert(data.error || 'Registration failed');
+        setToast(data.error || 'Registration failed');
         setLoading(false);
       }
     } catch (error) {
-      alert('Registration failed');
+      setToast('Registration failed');
       setLoading(false);
     }
   };
 
   return (
-    <div className="h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 flex items-center justify-center p-4 relative overflow-hidden">
+    <>
+      {toast && <Toast message={toast} onClose={() => setToast(null)} />}
+      <div className="h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 flex items-center justify-center p-4 relative overflow-hidden">
       {/* Mouse Follower Glow */}
       <div 
         className="absolute w-96 h-96 bg-cyan-400/20 rounded-full blur-3xl pointer-events-none transition-all duration-[3500ms] ease-out"
@@ -346,5 +350,6 @@ export default function Register() {
         </div>
       </div>
     </div>
+    </>
   );
 }

@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Eye, EyeOff, Mail, Lock, ArrowRight } from 'lucide-react';
 import { useLoading } from '../../contexts/LoadingContext';
+import Toast from '@/components/Toast';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -11,6 +12,7 @@ export default function Login() {
   const [rememberMe, setRememberMe] = useState(false);
   const { loading, setLoading } = useLoading();
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [toast, setToast] = useState(null);
 
   useEffect(() => {
     const handleMouseMove = (e) => {
@@ -62,24 +64,28 @@ export default function Login() {
         console.log('👤 User data:', data.user);
         localStorage.setItem('token', data.token);
         console.log('💾 Token stored in localStorage');
-        alert('Login successful!');
-        window.location.href = '/dashboard';
+        setToast('Login successful!');
+        setTimeout(() => {
+          window.location.href = '/dashboard';
+        }, 1000);
       } else {
         console.log('❌ Login failed with status:', response.status);
         console.log('📄 Error response:', data);
         console.log('🚫 Error message:', data.error);
-        alert(data.error || 'Login failed');
+        setToast(data.error || 'Login failed');
       }
     } catch (error) {
       console.error('Login error:', error);
-      alert('Login failed: ' + error.message);
+      setToast('Login failed: ' + error.message);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 flex items-center justify-center p-4 relative overflow-hidden">
+    <>
+      {toast && <Toast message={toast} onClose={() => setToast(null)} />}
+      <div className="h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 flex items-center justify-center p-4 relative overflow-hidden">
       {/* Mouse Follower Glow */}
       <div 
         className="absolute w-96 h-96 bg-cyan-400/20 rounded-full blur-3xl pointer-events-none transition-all duration-[3500ms] ease-out"
@@ -244,5 +250,6 @@ export default function Login() {
         }
       `}</style>
     </div>
+    </>
   );
 }
