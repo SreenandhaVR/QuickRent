@@ -8,10 +8,13 @@ const nextConfig = {
       },
     ],
     formats: ['image/webp', 'image/avif'],
-    minimumCacheTTL: 31536000,
+    minimumCacheTTL: 60,
   },
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',
+  },
+  generateBuildId: async () => {
+    return `build-${Date.now()}`
   },
   experimental: {
     optimizeCss: true,
